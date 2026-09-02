@@ -1,0 +1,194 @@
+{
+  "injuries": {
+    "general": {
+      "treatment": [
+        "Reduce load on the painful area and avoid any movement that reproduces sharp pain.",
+        "Use a structured warm-up and cool-down focused on mobility and tissue prep before dancing.",
+        "Apply a warm-up before activity and a cool-down after activity to help tissues adapt gradually."
+      ],
+      "pt_exercises": [
+        "Gentle range-of-motion work in a pain-free range.",
+        "Single-leg balance drills to improve control and reduce compensation.",
+        "Core activation with dead bug or bird dog drills to support alignment."
+      ],
+      "strengthening": [
+        "Progressive glute bridge and single-leg bridge work to improve hip stability.",
+        "Band-resisted external rotation and isometric holds for control and tendon support.",
+        "Calf raises, hamstring curls, and step-downs to build capacity around the lower body."
+      ],
+      "helpful_links": [
+        "https://www.niams.nih.gov/health-topics",
+        "https://www.runnersworld.com/health-injuries/",
+        "https://www.apta.org/patients-and-public"
+      ],
+      "return_to_dance": "Progress back into full dancing only when the area feels stable, pain-free during rehearsal, and you can complete technical movement without compensation."
+    },
+    "ankle": {
+      "treatment": [
+        "Protect the ankle from repeated impact and avoid jumping or cutting until the pain has settled.",
+        "Use a compression wrap and ice for flare-ups, especially after rehearsals or long dance days.",
+        "Focus on mobility in the foot and calf, then gradually reintroduce controlled weight-bearing work."
+      ],
+      "pt_exercises": [
+        "Ankle alphabet circles and calf pumps through a pain-free range.",
+        "Single-leg balance with toe raises and reach drills.",
+        "Gentle posterior chain work such as calf raises and controlled heel-elevated squats."
+      ],
+      "strengthening": [
+        "Eccentric calf raises with slow lowering.",
+        "Single-leg hip stability work such as step-downs and split squats.",
+        "Band-resisted ankle inversion and eversion to improve stability."
+      ],
+      "helpful_links": [
+        "https://www.verywellhealth.com/ankle-sprain-treatment-2696680",
+        "https://www.foothealthfacts.org/conditions/ankle-sprains",
+        "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4265792/"
+      ],
+      "return_to_dance": "Return only after you can hop, land, and pivot without pain or wobble, and after your calf and ankle strength have improved."
+    },
+    "knee": {
+      "treatment": [
+        "Reduce repeated loading and avoid deep knee bends, jumps, and turns until pain is controlled.",
+        "Support the knee with a sleeve or wrap if it improves comfort, but prioritize full control and mobility.",
+        "Use a structured activation plan for glute and calf muscles so the knee is not overloaded during landing."
+      ],
+      "pt_exercises": [
+        "Glute bridge holds with abduction and terminal knee extension drills.",
+        "Step-downs and squat-to-chair work with controlled depth.",
+        "Single-leg balance and half-squat holds for control."
+      ],
+      "strengthening": [
+        "Glute bridges, lateral band walks, and split squats.",
+        "Hamstring curls and calf raises to improve leg alignment.",
+        "Wall sits or squat holds with a gradual progression in duration."
+      ],
+      "helpful_links": [
+        "https://www.hopkinsmedicine.org/health/conditions-and-diseases/knee-pain",
+        "https://www.oaidocs.com/knee-pain/",
+        "https://www.apta.org/patients-and-public"
+      ],
+      "return_to_dance": "Return to impact work gradually after pain-free squatting, step-downs, and controlled landing mechanics are restored."
+    },
+    "hip": {
+      "treatment": [
+        "Avoid repetitive hip flexor strain positions and reduce loading during kicks or high-range movements.",
+        "Keep the pelvis and trunk aligned and avoid overcompensating with your low back or knee.",
+        "Use progressive mobility work without forcing end-range hip flexion or extension."
+      ],
+      "pt_exercises": [
+        "70/90 hip flexor stretch variations with a neutral pelvis.",
+        "Glute bridge march and clamshell activation.",
+        "Side-lying hip abduction and adductor isometrics."
+      ],
+      "strengthening": [
+        "Single-leg RDL and glute bridge progressions.",
+        "Lateral band walks and open-chain hip abduction.",
+        "Split squat and step-up progressions to build control and power."
+      ],
+      "helpful_links": [
+        "https://www.nhs.uk/conditions/hip-pain/",
+        "https://www.mayoclinic.org/symptoms/hip-pain/basics/definition/sym-20050634",
+        "https://www.apta.org/patients-and-public"
+      ],
+      "return_to_dance": "Reintroduce kicks and turns after strength and flexibility are restored and the hip no longer compensates during movement."
+    },
+    "back": {
+      "treatment": [
+        "Use neutral spine positions, reduce repetitive spinal loading, and avoid high-force turns until symptoms calm down.",
+        "Prioritize breathing, core stability, and pelvis control rather than aggressive stretch work.",
+        "If there is sharp pain or radiation, avoid pushing through discomfort and seek evaluation."
+      ],
+      "pt_exercises": [
+        "Dead bug and bird dog to improve trunk control.",
+        "Cat-cow movement and mindful spinal mobility in a pain-free range.",
+        "Supine core activation with leg movements while keeping the rib cage down."
+      ],
+      "strengthening": [
+        "Good mornings with light resistance and controlled tempo.",
+        "Glute bridge progressions and side planks.",
+        "Hip hinge and posterior chain strengthening for lower back support."
+      ],
+      "helpful_links": [
+        "https://www.nhs.uk/conditions/back-pain/",
+        "https://www.mayoclinic.org/diseases-conditions/back-pain/",
+        "https://www.spine-health.com/conditions/back-pain"
+      ],
+      "return_to_dance": "Return after you can hold posture and perform core-controlled movement without pain, guarding, or low-back fatigue."
+    },
+    "shoulder": {
+      "treatment": [
+        "Avoid overhead loading and avoid pushing ranges that cause pinching, sharp pain, or weakness.",
+        "Use controlled mobility and scaption work instead of aggressive stretching.",
+        "Support posture and scapular control to reduce compensation during upper-body movement."
+      ],
+      "pt_exercises": [
+        "Scapular wall slides and shoulder blade retraction drills.",
+        "Pendulum swings and controlled shoulder circles.",
+        "Isometric external rotation presses against a wall."
+      ],
+      "strengthening": [
+        "Band external rotation and row progressions.",
+        "Wall push-up plus and serratus activation.",
+        "Rotator cuff and scapular stability work with a slow tempo."
+      ],
+      "helpful_links": [
+        "https://www.mayoclinic.org/diseases-conditions/rotator-cuff-injury/",
+        "https://www.nhs.uk/conditions/shoulder-pain/",
+        "https://www.ptandme.com/rotator-cuff"
+      ],
+      "return_to_dance": "Return gradually after overhead movements are pain-free and shoulder stability and scapular control are restored."
+    },
+    "foot": {
+      "treatment": [
+        "Reduce repetitive forefoot loading and avoid forcing pointe or toe-flexing work until pain settles.",
+        "Support the arch and toe position with appropriate footwear or insoles if needed.",
+        "Keep the foot moving through a full but pain-free range to reduce stiffness."
+      ],
+      "pt_exercises": [
+        "Short foot exercises and toe spreading drills.",
+        "Arch raises and controlled mobility work in the metatarsal region.",
+        "Gentle exercises for the calf and intrinsic foot muscles."
+      ],
+      "strengthening": [
+        "Toe curls, marshmallow foot press, and resisted arch work.",
+        "Single-leg calf raises and balance work for dynamic control.",
+        "Progressive deep squat holds with proper foot alignment."
+      ],
+      "helpful_links": [
+        "https://www.foothealthfacts.org/conditions/foot-pain",
+        "https://www.apta.org/patients-and-public",
+        "https://www.nhs.uk/conditions/foot-pain/"
+      ],
+      "return_to_dance": "Return when the foot can absorb force under load without pain, and when your arches and intrinsic muscles can stabilize balance."
+    },
+    "shin": {
+      "treatment": [
+        "Reduce impact load and avoid hard repetitive jumps until the pain has decreased.",
+        "Focus on lower-leg mobility and foot mechanics to avoid shin splint symptoms reappearing.",
+        "Progress volume gradually and avoid doubling your effort in one rehearsal."
+      ],
+      "pt_exercises": [
+        "Calf raises and foot mobility drills.",
+        "Gentle stretching of the calf and tibialis muscles.",
+        "Single-leg balance and low-impact movement control."
+      ],
+      "strengthening": [
+        "Eccentric calf raises and tibialis strengthening.",
+        "Band-resisted foot and shin exercises.",
+        "Progressive step-ups and landing control drills."
+      ],
+      "helpful_links": [
+        "https://www.niams.nih.gov/health-topics/shin-splints",
+        "https://www.verywellhealth.com/shin-splints-3434748",
+        "https://www.apta.org/patients-and-public"
+      ],
+      "return_to_dance": "Return to jumping and fast turns only when the shin tolerates load and your strength and landing mechanics are improved."
+    }
+  },
+  "links": [
+    "https://www.niams.nih.gov/health-topics",
+    "https://www.apta.org/patients-and-public",
+    "https://www.cdc.gov/physicalactivity/basics/index.htm",
+    "https://www.health.harvard.edu/staying-healthy/what-to-do-if-you-have-persistent-pain"
+  ]
+}

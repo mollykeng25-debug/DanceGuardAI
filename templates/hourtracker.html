@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DanceGuard - Dance Hour Tracker</title>
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='sidebar.js') }}" defer></script>
+  <style>
+    :root {
+      --bg: #091722;
+      --panel: #162a38;
+      --panel-2: #1b3447;
+      --line: #3a5870;
+      --text: #edf6ff;
+      --text-muted: #a9bfd3;
+      --teal: #2ec7d7;
+      --teal-glow: #7fe8f1;
+      --yellow: #f5be5b;
+      --coral: #ef6c62;
+      --shadow-outer: 0 20px 40px rgba(2, 8, 18, 0.6), 0 8px 18px rgba(2, 8, 18, 0.35);
+      --shadow-inset: inset 1px 1px 0 rgba(255,255,255,0.12), inset -2px -2px 5px rgba(2, 8, 18, 0.68);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: radial-gradient(circle at 82% 10%, rgba(245,190,91,0.08), transparent 20rem), radial-gradient(circle at 20% 20%, rgba(126,232,241,0.12), transparent 22rem), linear-gradient(160deg, #091722 0%, #0d1d2a 32%, #07131d 100%);
+      color: var(--text);
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    .page-header {
+      padding-top: 4.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .page-header h1 {
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, var(--teal-glow), var(--yellow) 80%, #f4a261);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      margin-top: 0.45rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(33, 52, 65, 0.98), rgba(11, 21, 30, 0.96));
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 20px;
+      padding: 1.4rem;
+      box-shadow: var(--shadow-outer), var(--shadow-inset);
+    }
+
+    .card h2 {
+      margin-bottom: 0.8rem;
+      color: var(--teal-glow);
+      font-size: 1.15rem;
+    }
+
+    .question {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      border: 1px solid rgba(120, 151, 170, 0.8);
+      border-radius: 12px;
+      background: linear-gradient(180deg, #2ec7d7, #1a9db1);
+      color: #ecfeff;
+      padding: 0.8rem 1.2rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 0 rgba(4, 11, 18, 0.55), inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38);
+    }
+
+    .btn.secondary {
+      background: linear-gradient(180deg, #243d4f, #162b38);
+    }
+
+    .btn.coral {
+      background: linear-gradient(180deg, #ef6c62, #c74a44);
+      border-color: rgba(255, 175, 170, 0.48);
+    }
+
+    .hidden { display: none !important; }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    label {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: inline-block;
+      margin-bottom: 0.45rem;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.8rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      background: linear-gradient(180deg, #0d1925, #101f2d);
+      color: var(--text);
+      box-shadow: inset 3px 3px 7px rgba(0,0,0,0.26), inset -2px -2px 5px rgba(255,255,255,0.04);
+      font: inherit;
+    }
+
+    .status {
+      margin-top: 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      min-height: 1.2rem;
+    }
+
+    .calendar-shell {
+      margin-top: 1rem;
+      background: rgba(10, 18, 25, 0.72);
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(95, 128, 144, 0.7);
+      background: rgba(15, 28, 37, 0.9);
+    }
+
+    .calendar-title {
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .nav-button {
+      border: 1px solid rgba(120, 151, 170, 0.8);
+      background: linear-gradient(180deg, #243d4f, #162b38);
+      color: var(--text);
+      border-radius: 8px;
+      width: 2rem;
+      height: 2rem;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 0.35rem;
+      padding: 0.85rem;
+    }
+
+    .day-label {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding-bottom: 0.3rem;
+    }
+
+    .day-cell {
+      min-height: 82px;
+      border-radius: 10px;
+      border: 1px solid rgba(95, 128, 144, 0.6);
+      background: rgba(17, 28, 36, 0.82);
+      padding: 0.45rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .day-cell.empty {
+      background: rgba(12, 18, 24, 0.5);
+      border-style: dashed;
+    }
+
+    .day-number {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .day-hours {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--teal-glow);
+    }
+
+    .day-cell.has-hours {
+      border-color: rgba(126, 232, 241, 0.7);
+      background: rgba(17, 42, 48, 0.9);
+    }
+
+    .month-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .summary-box {
+      background: rgba(13, 25, 35, 0.9);
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 12px;
+      padding: 0.8rem;
+    }
+
+    .summary-box .small {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.3rem;
+    }
+
+    .summary-box strong {
+      font-size: 1.4rem;
+      color: var(--yellow);
+    }
+
+    @media (max-width: 860px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .field-grid, .month-summary {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="page-header">
+      <h1>Dance Hour Tracker</h1>
+      <div class="subtitle">Track your real dance time and stay consistent</div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Daily check-in</h2>
+
+        <div id="tracker-question">
+          <div class="question">Did you dance today?</div>
+          <div class="button-row">
+            <button class="btn" data-choice="yes">Yes</button>
+            <button class="btn secondary" data-choice="no">No</button>
+          </div>
+        </div>
+
+        <div id="tracker-form" class="hidden">
+          <div class="question">Tell us about your dance session</div>
+
+          <div class="field-grid">
+            <div>
+              <label for="dance-date">Date</label>
+              <input id="dance-date" type="date">
+            </div>
+            <div>
+              <label for="dance-duration">Length</label>
+              <select id="dance-duration">
+                <option value="0.5">30 minutes</option>
+                <option value="1">1 hour</option>
+                <option value="1.5">1.5 hours</option>
+                <option value="2">2 hours</option>
+                <option value="2.5">2.5 hours</option>
+                <option value="3">3 hours</option>
+                <option value="3.5">3.5 hours</option>
+                <option value="4">4 hours</option>
+                <option value="4.5">4.5 hours</option>
+                <option value="5">5 hours</option>
+              </select>
+            </div>
+            <div>
+              <label for="dance-start">Start time</label>
+              <input id="dance-start" type="time">
+            </div>
+            <div>
+              <label for="dance-end">End time</label>
+              <input id="dance-end" type="time">
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="save-dance-hours" class="btn">Save dance time</button>
+            <button id="skip-survey" class="btn coral">Skip this survey for now if you have dance later in the day!</button>
+          </div>
+        </div>
+
+        <div id="tracker-status" class="status" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>Monthly dance calendar</h2>
+        <div class="calendar-shell">
+          <div class="calendar-header">
+            <div class="calendar-title" id="calendar-title">Month</div>
+            <div class="calendar-nav">
+              <button class="nav-button" id="prev-month" type="button">←</button>
+              <button class="nav-button" id="next-month" type="button">→</button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
+
+        <div class="month-summary">
+          <div class="summary-box">
+            <span class="small">This month</span>
+            <strong id="month-total-hours">0.0h</strong>
+          </div>
+          <div class="summary-box">
+            <span class="small">Dance days</span>
+            <strong id="month-day-count">0</strong>
+          </div>
+          <div class="summary-box">
+            <span class="small">Average</span>
+            <strong id="month-average-hours">0.0h</strong>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const trackerQuestion = document.getElementById('tracker-question');
+    const trackerForm = document.getElementById('tracker-form');
+    const trackerStatus = document.getElementById('tracker-status');
+    const calendarGrid = document.getElementById('calendar-grid');
+    const calendarTitle = document.getElementById('calendar-title');
+    const monthTotalHours = document.getElementById('month-total-hours');
+    const monthDayCount = document.getElementById('month-day-count');
+    const monthAverageHours = document.getElementById('month-average-hours');
+
+    let danceLog = [];
+    let calendarDate = new Date();
+
+    function loadDanceLog() {
+      const saved = localStorage.getItem('danceguard_profile_data');
+      if (!saved) {
+        danceLog = [];
+        return;
+      }
+      try {
+        const profile = JSON.parse(saved);
+        danceLog = Array.isArray(profile.dance_hours_log) ? profile.dance_hours_log : [];
+      } catch (error) {
+        danceLog = [];
+      }
+    }
+
+    function saveDanceLog() {
+      const saved = localStorage.getItem('danceguard_profile_data');
+      if (!saved) return;
+      try {
+        const profile = JSON.parse(saved);
+        profile.dance_hours_log = danceLog;
+        localStorage.setItem('danceguard_profile_data', JSON.stringify(profile));
+      } catch (error) {}
+    }
+
+    function setTodayDefaults() {
+      const today = new Date();
+      const yyyy = today.toISOString().split('T')[0];
+      document.getElementById('dance-date').value = yyyy;
+      document.getElementById('dance-start').value = '18:00';
+      document.getElementById('dance-end').value = '20:00';
+    }
+
+    function showForm() {
+      trackerQuestion.classList.add('hidden');
+      trackerForm.classList.remove('hidden');
+      setTodayDefaults();
+    }
+
+    function goToPracticeStudio() {
+      window.location.href = '/dance';
+    }
+
+    document.querySelector('[data-choice="yes"]').addEventListener('click', showForm);
+    document.querySelector('[data-choice="no"]').addEventListener('click', goToPracticeStudio);
+
+    document.getElementById('skip-survey').addEventListener('click', () => {
+      trackerStatus.textContent = 'Survey skipped for now. You can log your dance time later.';
+      goToPracticeStudio();
+    });
+
+    document.getElementById('save-dance-hours').addEventListener('click', async () => {
+      const date = document.getElementById('dance-date').value;
+      const startTime = document.getElementById('dance-start').value;
+      const endTime = document.getElementById('dance-end').value;
+      const hours = Number(document.getElementById('dance-duration').value || 0);
+
+      if (!date || !startTime || !endTime) {
+        trackerStatus.textContent = 'Please fill in the date and times before saving.';
+        return;
+      }
+
+      if (hours <= 0) {
+        trackerStatus.textContent = 'Please choose a dance duration.';
+        return;
+      }
+
+      const body = {
+        date,
+        start_time: startTime,
+        end_time: endTime,
+        hours,
+        logged_at: new Date().toISOString()
+      };
+
+      try {
+        const response = await fetch('/api/dance-hours', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          trackerStatus.textContent = data.error || 'Unable to save your dance time.';
+          return;
+        }
+
+        danceLog.push({
+          date,
+          start_time: startTime,
+          end_time: endTime,
+          hours,
+          logged_at: body.logged_at
+        });
+        saveDanceLog();
+        trackerStatus.textContent = 'Dance time saved successfully.';
+        renderCalendar();
+        setTimeout(() => window.location.href = '/dance', 500);
+      } catch (error) {
+        trackerStatus.textContent = 'There was an issue saving your dance time.';
+      }
+    });
+
+    function monthKey(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function renderCalendar() {
+      loadDanceLog();
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startingDay = firstDay.getDay();
+      const totalDays = lastDay.getDate();
+      const monthName = calendarDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      calendarTitle.textContent = monthName;
+
+      const rows = [];
+      ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach((day) => rows.push(`<div class="day-label">${day}</div>`));
+
+      for (let i = 0; i < startingDay; i++) {
+        rows.push('<div class="day-cell empty"></div>');
+      }
+
+      const monthMatches = {};
+      danceLog.forEach((entry) => {
+        if (!entry.date) return;
+        const d = new Date(entry.date + 'T00:00:00');
+        if (d.getFullYear() === year && d.getMonth() === month) {
+          const key = d.getDate();
+          monthMatches[key] = (monthMatches[key] || 0) + Number(entry.hours || 0);
+        }
+      });
+
+      let totalHours = 0;
+      let daysCount = 0;
+      for (let day = 1; day <= totalDays; day++) {
+        const value = monthMatches[day] || 0;
+        const isActive = value > 0;
+        totalHours += value;
+        if (isActive) daysCount += 1;
+        rows.push(`
+          <div class="day-cell ${isActive ? 'has-hours' : ''}">
+            <div class="day-number">${day}</div>
+            ${isActive ? `<div class="day-hours">${value.toFixed(1)}h</div>` : '<div></div>'}
+          </div>
+        `);
+      }
+
+      while (rows.length % 7 !== 0) {
+        rows.push('<div class="day-cell empty"></div>');
+      }
+
+      calendarGrid.innerHTML = rows.join('');
+      monthTotalHours.textContent = `${totalHours.toFixed(1)}h`;
+      monthDayCount.textContent = String(daysCount);
+      monthAverageHours.textContent = `${(daysCount ? totalHours / daysCount : 0).toFixed(1)}h`;
+    }
+
+    document.getElementById('prev-month').addEventListener('click', () => {
+      calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1);
+      renderCalendar();
+    });
+
+    document.getElementById('next-month').addEventListener('click', () => {
+      calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1);
+      renderCalendar();
+    });
+
+    function initTracker() {
+      const saved = localStorage.getItem('danceguard_profile_data');
+      if (saved) {
+        try {
+          const profile = JSON.parse(saved);
+          if (profile && Array.isArray(profile.dance_hours_log)) {
+            danceLog = profile.dance_hours_log;
+          }
+        } catch (error) {}
+      }
+      renderCalendar();
+    }
+
+    initTracker();
+  </script>
+</body>
+</html>

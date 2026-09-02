@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DanceGuard - Profile Setup</title>
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+  <style>
+    :root {
+      --bg: #091722;
+      --panel: #162a38;
+      --line: #3a5870;
+      --text: #edf6ff;
+      --text-muted: #a9bfd3;
+      --teal: #2ec7d7;
+      --teal-glow: #7fe8f1;
+      --yellow: #f5be5b;
+      --coral: #ef6c62;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: radial-gradient(circle at 18% 20%, rgba(126,232,241,0.12), transparent 20rem), linear-gradient(160deg, #091722 0%, #0d1d2a 32%, #07131d 100%);
+      color: var(--text);
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .form-card {
+      background: linear-gradient(180deg, rgba(33, 52, 65, 0.98), rgba(11, 21, 30, 0.96));
+      border-radius: 20px;
+      padding: clamp(1.5rem, 4vw, 2.5rem);
+      width: 100%;
+      max-width: 560px;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      box-shadow: 0 22px 46px rgba(0, 0, 0, 0.42), inset 1px 1px 0 rgba(255,255,255,0.08), inset -2px -2px 5px rgba(0,0,0,0.28);
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1.25rem;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .back-link:hover { color: var(--teal-glow); }
+
+    #form-status {
+      min-height: 1.2rem;
+      margin: 0.75rem 0 0;
+      color: var(--coral);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: clamp(1.7rem, 3vw, 2.2rem);
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--teal-glow), var(--yellow) 78%, #f4a261);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+
+    p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+    label {
+      display: block;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+      font-weight: 700;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.8rem 0.85rem;
+      background: linear-gradient(180deg, #0d1925, #101f2d);
+      color: var(--text);
+      border-radius: 10px;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      margin-top: 0.35rem;
+      font-size: 0.95rem;
+      box-shadow: inset 3px 3px 7px rgba(0,0,0,0.26), inset -2px -2px 5px rgba(255,255,255,0.04);
+    }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 0.45rem;
+      margin-top: 0.5rem;
+    }
+
+    .day-checkbox { display: none; }
+
+    .day-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.7rem;
+      background: linear-gradient(180deg, #243d4f, #162b38);
+      border: 1px solid rgba(120, 151, 170, 0.8);
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      color: var(--text-muted);
+      user-select: none;
+      box-shadow: 0 6px 0 rgba(4, 11, 18, 0.55), inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38);
+    }
+
+    .day-checkbox:checked + .day-label {
+      background: linear-gradient(180deg, #2ec7d7, #1a9db1);
+      color: #ecfeff;
+      border-color: rgba(126, 232, 241, 0.45);
+    }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(180deg, #2ec7d7, #1a9db1);
+      color: #ecfeff;
+      border: 1px solid rgba(126, 232, 241, 0.45);
+      padding: 0.9rem 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+      margin-top: 1.75rem;
+      font-size: 1rem;
+      box-shadow: 0 8px 0 rgba(4, 11, 18, 0.55), inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .btn:active { transform: translateY(2px); box-shadow: inset 3px 3px 6px rgba(0,0,0,0.34), inset -1px -1px 2px rgba(255,255,255,0.08); }
+
+    @media (max-width: 560px) {
+      body { padding: 1rem; }
+      .days-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-card">
+    <a class="back-link" href="/">&larr; Back to home</a>
+    <h2>Complete Your Profile</h2>
+    <p>Tell us about your dance routine so DanceGuard can customize your training schedule.</p>
+
+    <form id="profile-form">
+      <label>Dancer Name</label>
+      <input type="text" id="dancer-name" placeholder="e.g. Alex" required>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div>
+          <label>Age</label>
+          <input type="number" id="dancer-age" min="5" max="100" placeholder="e.g. 17" required>
+        </div>
+        <div>
+          <label>Hours Danced / Week</label>
+          <input type="number" id="dance-hours" min="1" max="60" placeholder="e.g. 10" required>
+        </div>
+      </div>
+
+      <label>Which days do you dance?</label>
+      <div class="days-grid">
+        <input type="checkbox" id="day-sun" value="Sunday" class="day-checkbox"><label for="day-sun" class="day-label">Sun</label>
+        <input type="checkbox" id="day-mon" value="Monday" class="day-checkbox"><label for="day-mon" class="day-label">Mon</label>
+        <input type="checkbox" id="day-tue" value="Tuesday" class="day-checkbox"><label for="day-tue" class="day-label">Tue</label>
+        <input type="checkbox" id="day-wed" value="Wednesday" class="day-checkbox"><label for="day-wed" class="day-label">Wed</label>
+        <input type="checkbox" id="day-thu" value="Thursday" class="day-checkbox"><label for="day-thu" class="day-label">Thu</label>
+        <input type="checkbox" id="day-fri" value="Friday" class="day-checkbox"><label for="day-fri" class="day-label">Fri</label>
+        <input type="checkbox" id="day-sat" value="Saturday" class="day-checkbox"><label for="day-sat" class="day-label">Sat</label>
+      </div>
+
+      <label>Primary Dance Style</label>
+      <select id="dance-style">
+        <option value="hiphop">Hip-Hop / Breaking</option>
+        <option value="ballet">Ballet / Contemporary</option>
+        <option value="jazz">Jazz / Theater</option>
+      </select>
+
+      <label>Previous Injuries / Sensitive Areas</label>
+      <input type="text" id="past-injuries" placeholder="e.g. Right ankle sprain, lower back strain">
+
+      <button type="submit" class="btn" id="submit-profile">Save Profile & Continue</button>
+      <p id="form-status" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const selectedDays = Array.from(document.querySelectorAll('.day-checkbox:checked')).map(cb => cb.value);
+
+      const profile = {
+        name: document.getElementById('dancer-name').value,
+        age: document.getElementById('dancer-age').value,
+        hours_per_week: document.getElementById('dance-hours').value,
+        dance_days: selectedDays,
+        style: document.getElementById('dance-style').value,
+        injuries: document.getElementById('past-injuries').value
+      };
+
+      localStorage.setItem("danceguard_profile_created", "true");
+      localStorage.setItem("danceguard_profile_data", JSON.stringify(profile));
+
+      const submitButton = document.getElementById('submit-profile');
+      const status = document.getElementById('form-status');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Saving profile...';
+      status.textContent = '';
+
+      try {
+        const res = await fetch('/submit-survey', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profile)
+        });
+
+        if (!res.ok) throw new Error('Profile could not be saved.');
+        const data = await res.json();
+        if (data.redirect) window.location.href = data.redirect;
+      } catch (error) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Save Profile & Continue';
+        status.textContent = 'Unable to save your profile. Please try again.';
+      }
+    });
+  </script>
+
+</body>
+</html>

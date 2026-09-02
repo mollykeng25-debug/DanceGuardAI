@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DanceGuard - Profile</title>
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='sidebar.js') }}" defer></script>
+  <style>
+    :root {
+      --bg: #091722;
+      --panel: #162a38;
+      --line: #3a5870;
+      --text: #edf6ff;
+      --text-muted: #a9bfd3;
+      --teal: #2ec7d7;
+      --teal-glow: #7fe8f1;
+      --yellow: #f5be5b;
+      --coral: #ef6c62;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      padding: 6rem 1.5rem 2rem;
+      color: var(--text);
+      background: radial-gradient(circle at 18% 20%, rgba(126,232,241,0.12), transparent 20rem), linear-gradient(160deg, #091722 0%, #0d1d2a 32%, #07131d 100%);
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      line-height: 1.5;
+    }
+
+    .profile-shell { width: min(100%, 760px); margin: 0 auto; }
+    .profile-card {
+      padding: 2rem;
+      background: linear-gradient(180deg, rgba(33, 52, 65, 0.98), rgba(11, 21, 30, 0.96));
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 20px;
+      box-shadow: 0 22px 46px rgba(0, 0, 0, 0.42), inset 1px 1px 0 rgba(255,255,255,0.08), inset -2px -2px 5px rgba(0,0,0,0.28);
+    }
+    .profile-heading { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.75rem; }
+    .profile-avatar { display: grid; place-items: center; width: 4.5rem; height: 4.5rem; flex: 0 0 auto; overflow: hidden; border: 2px solid rgba(126, 232, 241, 0.6); border-radius: 50%; background: linear-gradient(180deg, #243d4f, #162b38); color: #dbe2e5; font: 800 1.8rem "Space Grotesk", sans-serif; box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38); }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-tools { display: flex; flex-wrap: wrap; gap: .55rem; margin: 0 0 1.5rem; }
+    .avatar-tools label, .avatar-tools button { margin: 0; width: auto; }
+    .avatar-tools label { cursor: pointer; }
+    .avatar-status { flex-basis: 100%; min-height: 1.1rem; color: var(--text-muted); font-size: .78rem; }
+    h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); background: linear-gradient(135deg, var(--teal-glow), var(--yellow) 78%, #f4a261); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { margin-top: .35rem; color: var(--text-muted); font-size: .9rem; }
+    .profile-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .8rem; }
+    .profile-field {
+      padding: 1rem;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(12, 19, 27, 0.9), rgba(17, 28, 37, 0.92));
+      box-shadow: inset 1px 1px 0 rgba(255,255,255,0.05), inset -1px -1px 0 rgba(0,0,0,0.2);
+    }
+    .profile-field.full { grid-column: 1 / -1; }
+    .profile-field dt { color: var(--text-muted); font-size: .75rem; margin-bottom: .35rem; }
+    .profile-field dd { font-weight: 700; line-height: 1.4; }
+    .ranking-list { display: grid; gap: .65rem; margin-top: .8rem; }
+    .ranking-item { display: flex; justify-content: space-between; gap: 1rem; padding: .85rem 1rem; border: 1px solid rgba(95, 128, 144, 0.8); border-radius: 12px; background: rgba(11, 20, 28, 0.75); }
+    .ranking-item strong { color: var(--yellow); }
+    .profile-actions { display: flex; gap: .75rem; margin-top: 1.5rem; }
+    .profile-actions a { flex: 1; text-align: center; text-decoration: none; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(120, 151, 170, 0.8);
+      background: linear-gradient(180deg, #2ec7d7, #1a9db1);
+      color: #ecfeff;
+      cursor: pointer;
+      font-weight: 800;
+      box-shadow: 0 6px 0 rgba(4, 11, 18, 0.55), inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .btn:active { transform: translateY(2px); box-shadow: inset 3px 3px 6px rgba(0,0,0,0.34), inset -1px -1px 2px rgba(255,255,255,0.08); }
+    .btn-secondary { background: linear-gradient(180deg, #243d4f, #162b38); }
+    .camera-modal { display: none; position: fixed; inset: 0; z-index: 300; align-items: center; justify-content: center; padding: 1rem; background: rgba(2, 8, 16, 0.72); }
+    .camera-modal.open { display: flex; }
+    .camera-dialog {
+      width: min(100%, 560px);
+      padding: 1rem;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(33, 52, 65, 0.98), rgba(11, 21, 30, 0.96));
+      box-shadow: 0 24px 70px rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,255,255,0.08), inset -2px -2px 5px rgba(0,0,0,0.28);
+    }
+    .camera-preview { display: block; width: 100%; max-height: 65vh; object-fit: cover; transform: scaleX(-1); border-radius: 14px; background: #050a10; }
+    .camera-actions { display: flex; gap: .7rem; margin-top: .8rem; }
+    .camera-actions .btn { flex: 1; text-align: center; }
+
+    @media (max-width: 600px) {
+      body { padding: 5rem .85rem 1rem; }
+      .profile-card { padding: 1.2rem; }
+      .profile-heading { align-items: flex-start; }
+      .profile-grid { grid-template-columns: 1fr; }
+      .profile-field.full { grid-column: auto; }
+      .profile-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="profile-shell">
+    <section class="profile-card glass-card" aria-labelledby="profile-title">
+      <div class="profile-heading">
+        <div class="profile-avatar" id="profile-avatar" aria-label="Profile photo">
+          {% if profile.avatar %}<img src="{{ profile.avatar }}" alt="Profile photo">{% else %}<span class="avatar-placeholder">{{ (profile.name or 'D')[:1]|upper }}</span>{% endif %}
+        </div>
+        <div>
+          <h1 id="profile-title">{{ profile.name or 'Dancer Profile' }}</h1>
+          <p class="subtitle">Your DanceGuard training profile</p>
+        </div>
+      </div>
+
+      <div class="avatar-tools">
+        <label class="btn btn-secondary" for="avatar-upload">Upload image</label>
+        <input type="file" id="avatar-upload" accept="image/*" hidden>
+        <button class="btn btn-secondary" type="button" id="take-photo">Take photo</button>
+        <button class="btn btn-secondary" type="button" id="remove-photo">Remove photo</button>
+        <span class="avatar-status" id="avatar-status" role="status" aria-live="polite"></span>
+      </div>
+
+      <dl class="profile-grid">
+        <div class="profile-field">
+          <dt>Age</dt>
+          <dd>{{ profile.age or 'Not provided' }}</dd>
+        </div>
+        <div class="profile-field">
+          <dt>Hours danced per week</dt>
+          <dd>{{ profile.hours_per_week or 'Not provided' }}</dd>
+        </div>
+        <div class="profile-field full">
+          <dt>Dance days</dt>
+          <dd>{{ profile.dance_days|join(', ') if profile.dance_days else 'Not provided' }}</dd>
+        </div>
+        <div class="profile-field full">
+          <dt>Primary dance style</dt>
+          <dd>{{ profile.style or 'Not provided' }}</dd>
+        </div>
+        <div class="profile-field full">
+          <dt>Previous injuries or sensitive areas</dt>
+          <dd>{{ profile.injuries or 'None listed' }}</dd>
+        </div>
+      </dl>
+
+      <div class="profile-field" style="margin-top: .8rem;">
+        <dt>Challenge rankings</dt>
+        <div class="ranking-list">
+          {% for result in profile.challenge_results|default([], true) %}
+          <div class="ranking-item"><span>{{ result.duration }} minutes</span><span>{{ result.reps }} reps</span><strong>{{ result.ranking }}</strong></div>
+          {% else %}
+          <dd>No challenge results yet.</dd>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <a class="btn btn-secondary" href="/chatbot">AI Assistant</a>
+        <a class="btn" href="/dance">Practice Studio</a>
+      </div>
+    </section>
+  </main>
+  <div class="camera-modal" id="camera-modal" role="dialog" aria-modal="true" aria-labelledby="camera-title">
+    <div class="camera-dialog">
+      <h2 id="camera-title">Take profile photo</h2>
+      <video class="camera-preview" id="profile-camera" autoplay playsinline muted></video>
+      <p class="avatar-status" id="camera-status">Starting camera...</p>
+      <div class="camera-actions">
+        <button class="btn" type="button" id="capture-photo">Take photo</button>
+        <button class="btn btn-secondary" type="button" id="cancel-camera">Cancel</button>
+      </div>
+      <canvas id="photo-canvas" hidden></canvas>
+    </div>
+  </div>
+  <script>
+    const avatar = document.getElementById('profile-avatar');
+    const upload = document.getElementById('avatar-upload');
+    const status = document.getElementById('avatar-status');
+    const cameraModal = document.getElementById('camera-modal');
+    const cameraVideo = document.getElementById('profile-camera');
+    const cameraStatus = document.getElementById('camera-status');
+    let cameraStream = null;
+
+    function saveAvatar(imageData) {
+      status.textContent = 'Saving photo...';
+      fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar: imageData })
+      }).then((response) => {
+        if (!response.ok) throw new Error();
+        return response.json();
+      }).then(() => {
+        status.textContent = 'Profile photo saved.';
+      }).catch(() => {
+        status.textContent = 'Photo could not be saved.';
+      });
+    }
+
+    function showAvatar(imageData) {
+      avatar.innerHTML = `<img src="${imageData}" alt="Profile photo">`;
+      saveAvatar(imageData);
+    }
+
+    upload.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => showAvatar(reader.result);
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('take-photo').addEventListener('click', () => {
+      cameraModal.classList.add('open');
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        cameraStatus.textContent = 'Camera access is not supported in this browser.';
+        return;
+      }
+      cameraStatus.textContent = 'Starting camera...';
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: 'user' } }, audio: false })
+        .then((stream) => {
+          cameraStream = stream;
+          cameraVideo.srcObject = stream;
+          cameraStatus.textContent = 'Ready to take your photo.';
+        })
+        .catch(() => {
+          cameraStatus.textContent = 'Camera access was denied or is unavailable.';
+        });
+    });
+
+    function closeCamera() {
+      if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop());
+      cameraStream = null;
+      cameraVideo.srcObject = null;
+      cameraModal.classList.remove('open');
+    }
+
+    document.getElementById('capture-photo').addEventListener('click', () => {
+      if (!cameraStream || !cameraVideo.videoWidth) {
+        cameraStatus.textContent = 'Wait for the camera preview to start.';
+        return;
+      }
+      const canvas = document.getElementById('photo-canvas');
+      canvas.width = cameraVideo.videoWidth;
+      canvas.height = cameraVideo.videoHeight;
+      const context = canvas.getContext('2d');
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
+      context.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+      showAvatar(canvas.toDataURL('image/jpeg', .86));
+      closeCamera();
+    });
+
+    document.getElementById('cancel-camera').addEventListener('click', closeCamera);
+    cameraModal.addEventListener('click', (event) => {
+      if (event.target === cameraModal) closeCamera();
+    });
+
+    document.getElementById('remove-photo').addEventListener('click', () => {
+      showAvatar('');
+      avatar.innerHTML = `<span class="avatar-placeholder">{{ (profile.name or 'D')[:1]|upper }}</span>`;
+      status.textContent = 'Removing photo...';
+    });
+  </script>
+</body>
+</html>

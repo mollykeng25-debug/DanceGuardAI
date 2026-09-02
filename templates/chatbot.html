@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DanceGuard - AI Assistant</title>
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='sidebar.js') }}" defer></script>
+  <style>
+    :root {
+      --bg: #091722;
+      --panel: #162a38;
+      --line: #3a5870;
+      --text: #edf6ff;
+      --text-muted: #a9bfd3;
+      --teal: #2ec7d7;
+      --teal-glow: #7fe8f1;
+      --coral: #ef6c62;
+      --yellow: #f5be5b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: radial-gradient(circle at 20% 18%, rgba(126,232,241,0.12), transparent 20rem), linear-gradient(160deg, #091722 0%, #0d1d2a 32%, #07131d 100%);
+      color: var(--text);
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    header {
+      background: linear-gradient(180deg, rgba(24, 39, 51, 0.96), rgba(12, 22, 31, 0.98));
+      padding: 1.45rem 2rem;
+      border-bottom: 1px solid rgba(92, 122, 143, 0.8);
+      box-shadow: 0 12px 20px rgba(3, 8, 14, 0.24), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    h1 {
+      font-size: clamp(1.7rem, 2.5vw, 2.5rem);
+      background: linear-gradient(135deg, var(--teal-glow), var(--yellow) 78%, #f4a261);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .chat-container {
+      flex: 1;
+      max-width: 950px;
+      width: 100%;
+      margin: 1.5rem auto;
+      display: flex;
+      flex-direction: column;
+      padding: 0 1rem 1.5rem;
+    }
+
+    .assistant-intro {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding: 1rem 1.15rem;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(33, 52, 65, 0.98), rgba(11, 21, 30, 0.96));
+      box-shadow: 0 18px 32px rgba(2, 8, 18, 0.32), inset 1px 1px 0 rgba(255,255,255,0.1), inset -2px -2px 5px rgba(0,0,0,0.26);
+    }
+
+    .assistant-intro p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .assistant-intro .btn { flex: 0 0 auto; text-decoration: none; }
+
+    @media (max-width: 600px) {
+      .assistant-intro { align-items: flex-start; flex-direction: column; }
+      .assistant-intro .btn { width: 100%; text-align: center; }
+    }
+
+    .chat-box {
+      flex: 1;
+      background: linear-gradient(180deg, rgba(33, 52, 65, 0.98), rgba(11, 21, 30, 0.96));
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 18px;
+      padding: 1.5rem;
+      overflow-y: auto;
+      max-height: 55vh;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 18px 32px rgba(2, 8, 18, 0.32), inset 1px 1px 0 rgba(255,255,255,0.1), inset -2px -2px 5px rgba(0,0,0,0.26);
+    }
+
+    .chat-box:empty::before {
+      content: "Your conversation will appear here.";
+      color: var(--text-muted);
+      text-align: center;
+      margin: auto;
+    }
+
+    .msg {
+      max-width: 85%;
+      padding: 0.9rem 1.1rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background: linear-gradient(180deg, #2ec7d7, #1a9db1);
+      color: #ecfeff;
+      border: 1px solid rgba(126, 232, 241, 0.35);
+    }
+
+    .msg-ai {
+      align-self: flex-start;
+      background: rgba(10, 18, 25, 0.8);
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      color: var(--text);
+    }
+
+    .chat-status {
+      min-height: 1.2rem;
+      margin-top: 0.6rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .msg-img {
+      max-width: 200px;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      display: block;
+      border: 1px solid rgba(126, 232, 241, 0.4);
+    }
+
+    .input-area {
+      margin-top: 1rem;
+      background: linear-gradient(180deg, rgba(33, 52, 65, 0.98), rgba(11, 21, 30, 0.96));
+      border-radius: 18px;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      padding: 1rem;
+      box-shadow: 0 18px 32px rgba(2, 8, 18, 0.32), inset 1px 1px 0 rgba(255,255,255,0.1), inset -2px -2px 5px rgba(0,0,0,0.26);
+    }
+
+    .btn {
+      background: linear-gradient(180deg, #2ec7d7, #1a9db1);
+      color: #ecfeff;
+      border: 1px solid rgba(126, 232, 241, 0.45);
+      padding: 0.7rem 1.15rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform 0.16s ease, filter 0.16s ease;
+      box-shadow: 0 6px 0 rgba(4, 11, 18, 0.55), inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38);
+    }
+
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .btn:active { transform: translateY(2px); box-shadow: inset 3px 3px 6px rgba(0,0,0,0.34), inset -1px -1px 2px rgba(255,255,255,0.08); }
+    .btn-secondary { background: linear-gradient(180deg, #243d4f, #162b38); border-color: rgba(120, 151, 170, 0.8); }
+    .btn-coral { background: linear-gradient(180deg, #ef6c62, #c74a44); border-color: rgba(255, 175, 170, 0.48); }
+
+    input[type="text"], input[type="number"], select {
+      background: linear-gradient(180deg, #0d1925, #101f2d);
+      color: var(--text);
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      padding: 0.75rem 0.85rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      box-shadow: inset 3px 3px 7px rgba(0,0,0,0.26), inset -2px -2px 5px rgba(255,255,255,0.04);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>DanceGuard AI Assistant</h1>
+  </header>
+
+  <div class="chat-container">
+    <div class="assistant-intro">
+      <p>Ask about injury prevention, recovery, or share an image for a structured assessment.</p>
+      <a class="btn" href="/dance">Open Practice Studio</a>
+    </div>
+
+    <div class="chat-box" id="chat-box">
+      <div class="msg msg-ai">
+        Hello! I'm your DanceGuard AI Assistant. Ask me questions about injury prevention, recovery, or upload/take a photo of a strain or swollen joint for a structured first-aid assessment!
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div id="image-preview-container" style="display:none; margin-bottom:0.5rem; position:relative; width:fit-content;">
+        <img id="image-preview" src="" style="max-height:80px; border-radius:8px; border:1px solid var(--teal-glow);">
+        <button type="button" onclick="clearImagePreview()" style="position:absolute; top:-5px; right:-5px; background:var(--coral); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:12px;">✕</button>
+      </div>
+
+      <form id="chat-form" style="display:flex; gap:0.5rem; align-items:center;">
+        <label for="image-upload" class="btn btn-secondary" style="width:auto; padding:0.65rem 0.9rem; cursor:pointer;" title="Upload Image">📷</label>
+        <input type="file" id="image-upload" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+
+        <button type="button" class="btn btn-secondary" style="width:auto; padding:0.65rem 0.9rem;" onclick="openCamera()" title="Take Photo">📸</button>
+
+        <input type="text" id="user-input" placeholder="Ask about an injury or upload a photo..." style="flex:1;">
+        <button type="submit" class="btn" style="width:auto;">Send</button>
+      </form>
+      <div id="chat-status" class="chat-status" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- Onboarding Survey Modal -->
+  <div id="onboarding-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:200; align-items:center; justify-content:center;">
+    <div style="background:var(--bg); border:1px solid var(--glass-border); padding:2rem; border-radius:16px; max-width:400px; width:90%;">
+      <h2 style="color:var(--teal-glow); margin-bottom:1rem;">Welcome to DanceGuard</h2>
+      
+      <label style="display:block; margin-bottom:0.25rem;">Age</label>
+      <input type="number" id="user-age" value="14" style="width:100%; margin-bottom:1rem;">
+
+      <label style="display:block; margin-bottom:0.25rem;">Primary Dance Style</label>
+      <select id="user-style" style="width:100%; margin-bottom:1rem;">
+        <option value="ballet">Ballet</option>
+        <option value="contemporary">Contemporary</option>
+        <option value="jazz">Jazz</option>
+        <option value="hip-hop">Hip-Hop</option>
+      </select>
+
+      <button type="button" class="btn" style="width:100%;" onclick="saveProfile()">Save Profile</button>
+    </div>
+  </div>
+
+  <!-- Camera Modal with HUD & Audio Control -->
+  <div id="camera-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; justify-content:center; align-items:center; flex-direction:column; gap:1rem;">
+    <div style="position:relative; width:90%; max-width:500px;">
+      <video id="camera-feed" autoplay playsinline style="width:100%; border-radius:12px; border:1px solid var(--glass-border);"></video>
+      
+      <button type="button" id="camera-audio-toggle" onclick="toggleCameraAudio()" class="btn btn-secondary" style="position:absolute; top:10px; right:10px; padding:0.4rem 0.8rem; font-size:0.8rem;">
+        🔊 Audio On
+      </button>
+
+      <div id="exercise-hud" style="display:none; position:absolute; bottom:10px; left:10px; right:10px; background:rgba(0,0,0,0.75); padding:0.75rem; border-radius:8px;">
+        <h3 id="hud-exercise-name" style="color:var(--teal-glow); font-size:1rem;">Exercise Name</h3>
+        <p id="hud-timer" style="font-size:0.85rem;">Time Remaining: 60s</p>
+        <p id="hud-target" style="font-size:0.85rem; color:var(--yellow);">Target: 25 Reps</p>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:1rem;">
+      <button type="button" class="btn" onclick="capturePhoto()">Snap Photo</button>
+      <button type="button" class="btn btn-coral" onclick="closeCamera()">Cancel</button>
+    </div>
+    <canvas id="snapshot-canvas" style="display:none;"></canvas>
+  </div>
+
+  <script>
+    let currentImageBase64 = null;
+    let cameraStream = null;
+    let cameraAudioEnabled = true;
+    let poseTrackingInterval = null;
+    let routineInterval = null;
+    let lastSpokenTime = 0;
+    let userProfile = JSON.parse(localStorage.getItem('danceguard_user')) || null;
+    const history = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!userProfile) {
+        document.getElementById('onboarding-modal').style.display = 'flex';
+      }
+    });
+
+    function saveProfile() {
+      userProfile = {
+        age: parseInt(document.getElementById('user-age').value) || 14,
+        dance_style: document.getElementById('user-style').value
+      };
+      localStorage.setItem('danceguard_user', JSON.stringify(userProfile));
+      document.getElementById('onboarding-modal').style.display = 'none';
+    }
+
+    function speakCameraCue(text) {
+      if (!cameraAudioEnabled || !('speechSynthesis' in window)) return;
+      const now = Date.now();
+      if (now - lastSpokenTime < 3000) return;
+      
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+      lastSpokenTime = now;
+    }
+
+    function toggleCameraAudio() {
+      cameraAudioEnabled = !cameraAudioEnabled;
+      const btn = document.getElementById('camera-audio-toggle');
+      if (cameraAudioEnabled) {
+        btn.innerText = '🔊 Audio On';
+        speakCameraCue('Audio cues active.');
+      } else {
+        btn.innerText = '🔇 Audio Off';
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    async function openCamera() {
+      const modal = document.getElementById('camera-modal');
+      const video = document.getElementById('camera-feed');
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = cameraStream;
+        modal.style.display = 'flex';
+        speakCameraCue('Camera active.');
+        poseTrackingInterval = setInterval(processPoseFrame, 1000);
+      } catch (err) {
+        alert('Unable to access camera.');
+      }
+    }
+
+    function processPoseFrame() {
+      // Pose tracking execution loop
+    }
+
+    function runExerciseLoop(routine) {
+      document.getElementById('exercise-hud').style.display = 'block';
+      let currentIdx = 0;
+
+      function nextExercise() {
+        if (currentIdx >= routine.length) {
+          document.getElementById('exercise-hud').style.display = 'none';
+          speakCameraCue("Routine complete! Great job.");
+          return;
+        }
+
+        const ex = routine[currentIdx];
+        document.getElementById('hud-exercise-name').innerText = ex.name;
+        
+        if (ex.is_challenge) {
+          document.getElementById('hud-target').innerText = "Goal: AMRAP (As Many Reps As Possible)";
+        } else if (ex.reps) {
+          document.getElementById('hud-target').innerText = `Target: ${ex.reps} Reps`;
+        } else {
+          document.getElementById('hud-target').innerText = `Hold Stretch`;
+        }
+
+        speakCameraCue(`Next exercise: ${ex.name}`);
+
+        let timeLeft = ex.duration_sec || ex.hold_duration_sec;
+        if (routineInterval) clearInterval(routineInterval);
+
+        routineInterval = setInterval(() => {
+          timeLeft--;
+          document.getElementById('hud-timer').innerText = `Time Remaining: ${timeLeft}s`;
+          if (timeLeft <= 0) {
+            clearInterval(routineInterval);
+            currentIdx++;
+            nextExercise();
+          }
+        }, 1000);
+      }
+
+      nextExercise();
+    }
+
+    function capturePhoto() {
+      const video = document.getElementById('camera-feed');
+      const canvas = document.getElementById('snapshot-canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      currentImageBase64 = canvas.toDataURL('image/jpeg');
+      showPreview(currentImageBase64);
+      speakCameraCue('Photo captured.');
+      closeCamera();
+    }
+
+    function closeCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+      }
+      if (poseTrackingInterval) clearInterval(poseTrackingInterval);
+      if (routineInterval) clearInterval(routineInterval);
+      window.speechSynthesis.cancel();
+      document.getElementById('exercise-hud').style.display = 'none';
+      document.getElementById('camera-modal').style.display = 'none';
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          currentImageBase64 = e.target.result;
+          showPreview(currentImageBase64);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function showPreview(src) {
+      document.getElementById('image-preview').src = src;
+      document.getElementById('image-preview-container').style.display = 'block';
+    }
+
+    function clearImagePreview() {
+      currentImageBase64 = null;
+      document.getElementById('image-preview-container').style.display = 'none';
+      document.getElementById('image-upload').value = '';
+    }
+
+    function formatJsonChatReply(data) {
+      const lines = [];
+
+      if (data.answer) {
+        lines.push(data.answer);
+      }
+
+      if (Array.isArray(data.treatment) && data.treatment[0]) {
+        lines.push(data.treatment[0]);
+      }
+
+      if (Array.isArray(data.strengthening) && data.strengthening[0]) {
+        lines.push(data.strengthening[0]);
+      }
+
+      if (Array.isArray(data.warning_signs) && data.warning_signs[0]) {
+        lines.push(data.warning_signs[0]);
+      }
+
+      return lines.slice(0, 3).join(' ');
+    }
+
+    function appendMessage(sender, text, imageSrc = null, isJson = false) {
+      const box = document.getElementById('chat-box');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `msg msg-${sender}`;
+
+      if (imageSrc) {
+        const img = document.createElement('img');
+        img.src = imageSrc;
+        img.className = 'msg-img';
+        msgDiv.appendChild(img);
+      }
+
+      if (text) {
+        if (isJson) {
+          try {
+            const parsedData = JSON.parse(text);
+            const textNode = document.createElement('span');
+            textNode.innerText = formatJsonChatReply(parsedData);
+            msgDiv.appendChild(textNode);
+          } catch (e) {
+            msgDiv.innerText = text;
+          }
+        } else {
+          const textNode = document.createElement('span');
+          textNode.innerText = text;
+          msgDiv.appendChild(textNode);
+        }
+      }
+
+      box.appendChild(msgDiv);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    document.getElementById('chat-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const inputEl = document.getElementById('user-input');
+      const sendButton = e.currentTarget.querySelector('button[type="submit"]');
+      const statusEl = document.getElementById('chat-status');
+      const message = inputEl.value.trim();
+      
+      if (!message && !currentImageBase64) return;
+
+      const sentImage = currentImageBase64;
+      appendMessage('user', message, sentImage);
+
+      const payload = {
+        message: message || "Please analyze this image for potential injuries or swelling.",
+        image: sentImage,
+        history: history
+      };
+
+      clearImagePreview();
+      inputEl.value = '';
+      sendButton.disabled = true;
+      sendButton.textContent = 'Sending...';
+      statusEl.textContent = 'DanceGuard is thinking...';
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.reply || `Request failed (${res.status}).`);
+        appendMessage('ai', data.reply, null, data.is_json);
+        statusEl.textContent = data.service_notice || '';
+
+        history.push({ role: 'user', content: payload.message });
+        history.push({ role: 'assistant', content: data.reply });
+      } catch (err) {
+        appendMessage('ai', err.message || 'Error connecting to the AI server.');
+        statusEl.textContent = 'The assistant is temporarily unavailable. Please try again.';
+      } finally {
+        sendButton.disabled = false;
+        sendButton.textContent = 'Send';
+        if (!statusEl.textContent.includes('unavailable')) statusEl.textContent = '';
+      }
+    });
+  </script>
+</body>
+</html>

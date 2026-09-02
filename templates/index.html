@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DanceGuard - AI Dance Safety & Form Coach</title>
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+  <style>
+    :root {
+      --bg: #091722;
+      --bg-2: #0e1f2d;
+      --panel: #162a38;
+      --panel-2: #1b3447;
+      --line: #3a5870;
+      --text: #edf6ff;
+      --text-muted: #a9bfd3;
+      --teal: #2ec7d7;
+      --teal-glow: #7fe8f1;
+      --yellow: #f5be5b;
+      --coral: #ef6c62;
+      --shadow-outer: 0 20px 40px rgba(2, 8, 18, 0.6), 0 8px 18px rgba(2, 8, 18, 0.35);
+      --shadow-inset: inset 1px 1px 0 rgba(255,255,255,0.12), inset -2px -2px 5px rgba(2, 8, 18, 0.68);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: radial-gradient(circle at 15% 10%, rgba(126, 232, 241, 0.12), transparent 25rem), linear-gradient(160deg, #091722 0%, #0d1d2a 32%, #07131d 100%);
+      color: var(--text);
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .ambient-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(110px);
+      z-index: 0;
+      opacity: 0.28;
+      pointer-events: none;
+    }
+    .orb-teal { width: 500px; height: 500px; background: rgba(46, 199, 215, 0.65); top: -120px; left: -120px; }
+    .orb-yellow { width: 420px; height: 420px; background: rgba(245, 190, 91, 0.48); bottom: -120px; right: -60px; }
+
+    nav {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.4rem 2rem;
+      border-bottom: 1px solid rgba(92, 122, 143, 0.8);
+      background: linear-gradient(180deg, rgba(24, 39, 51, 0.96), rgba(12, 22, 31, 0.98));
+      box-shadow: 0 12px 20px rgba(3, 8, 14, 0.24), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    .logo {
+      font-size: clamp(1.4rem, 2vw, 1.75rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--teal-glow), var(--yellow) 75%, #f4a261);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-btn {
+      background: linear-gradient(180deg, #213d4f, #142838);
+      color: var(--text);
+      border: 1px solid rgba(120, 151, 170, 0.8);
+      padding: 0.7rem 1.1rem;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      box-shadow: 0 6px 0 rgba(4, 11, 18, 0.55), inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    .hero {
+      position: relative;
+      z-index: 10;
+      max-width: 900px;
+      margin: 4rem auto 2rem;
+      text-align: center;
+      padding: 0 1.5rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 4.1rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--teal-glow), var(--yellow) 75%, #f4a261);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      font-size: 1.08rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .btn-cta {
+      display: inline-block;
+      text-decoration: none;
+      padding: 1rem 2.2rem;
+      border-radius: 12px;
+      font-size: 1.08rem;
+      background: linear-gradient(180deg, #2ec7d7, #1a9db1);
+      border: 1px solid rgba(126, 232, 241, 0.45);
+      color: #ecfeff;
+      box-shadow: 0 8px 0 rgba(4, 11, 18, 0.55), inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .btn-cta:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    .section-container {
+      position: relative;
+      z-index: 10;
+      max-width: 1100px;
+      margin: 4rem auto;
+      padding: 0 1.5rem 2rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: var(--teal-glow);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .glass-card {
+      background: linear-gradient(180deg, rgba(33, 52, 65, 0.98), rgba(11, 21, 30, 0.96));
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 18px;
+      padding: 1.6rem;
+      box-shadow: var(--shadow-outer), var(--shadow-inset);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      border-radius: 999px;
+      margin-bottom: 0.8rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .badge-yellow { background: rgba(245,190,91,0.16); color: var(--yellow); border: 1px solid rgba(245,190,91,0.7); }
+    .badge-teal { background: rgba(46,199,215,0.15); color: var(--teal-glow); border: 1px solid rgba(126,232,241,0.7); }
+    .badge-coral { background: rgba(239,108,98,0.14); color: var(--coral); border: 1px solid rgba(239,108,98,0.7); }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .card-desc {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      nav {
+        padding: 1.15rem 1rem;
+      }
+      .hero {
+        margin-top: 3rem;
+      }
+      .section-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-orb orb-teal"></div>
+  <div class="ambient-orb orb-yellow"></div>
+
+  <nav>
+    <div class="logo">DanceGuard AI</div>
+  </nav>
+
+  <section class="hero">
+    <h1>Practice Smarter, Dance Safer with <span>AI Precision</span></h1>
+    <p>Real-time pose estimation, personalized warm-ups, strain tracking, and smart physical therapy matching built to protect dancers from injury.</p>
+    <a href="/survey" class="btn-cta" id="get-started-btn">Launch Studio</a>
+  </section>
+
+  <!-- Upcoming Features Section -->
+  <div class="section-container">
+    <h2 class="section-title">Upcoming Features</h2>
+    <div class="grid-3">
+      
+      <div class="glass-card">
+        <span class="badge badge-yellow">Coming Soon</span>
+        <div class="card-title">Real-Time Joint Angle Alerts</div>
+        <div class="card-desc">Instant audio cues that notify you when knee or ankle flexion exceeds safe physiological limits during intense choreography.</div>
+      </div>
+
+      <div class="glass-card">
+        <span class="badge badge-teal">In Development</span>
+        <div class="card-title">Wearable Sensor Sync</div>
+        <div class="card-desc">Integrate pulse and impact sensors to measure foot landing forces and track fatigue levels across extended rehearsals.</div>
+      </div>
+
+      <div class="glass-card">
+        <span class="badge badge-coral">Q4 Roadmap</span>
+        <div class="card-title">3D Pose Reconstruction</div>
+        <div class="card-desc">Transform standard single-camera video streams into interactive 3D avatars to evaluate turn alignment from any camera angle.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const getStartedBtn = document.getElementById("get-started-btn");
+      const savedProfile = localStorage.getItem("danceguard_profile_data");
+      const hasProfile = !!savedProfile && JSON.parse(savedProfile).name;
+      getStartedBtn.href = hasProfile ? "/hourtracker" : "/survey";
+      getStartedBtn.textContent = hasProfile ? "Open Tracker" : "Launch Studio";
+    });
+  </script>
+
+</body>
+</html>

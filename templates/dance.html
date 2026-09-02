@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DanceGuard - Practice Studio</title>
+  <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='sidebar.js') }}" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --bg: #091722;
+      --panel: #162a38;
+      --panel-2: #1b3447;
+      --line: #3a5870;
+      --text: #edf6ff;
+      --text-muted: #a9bfd3;
+      --teal: #2ec7d7;
+      --teal-glow: #7fe8f1;
+      --yellow: #f5be5b;
+      --coral: #ef6c62;
+      --shadow-outer: 0 20px 40px rgba(2, 8, 18, 0.6), 0 8px 18px rgba(2, 8, 18, 0.35);
+      --shadow-inset: inset 1px 1px 0 rgba(255,255,255,0.12), inset -2px -2px 5px rgba(2, 8, 18, 0.68);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: radial-gradient(circle at 82% 10%, rgba(245,190,91,0.08), transparent 20rem), radial-gradient(circle at 20% 20%, rgba(126,232,241,0.12), transparent 22rem), linear-gradient(160deg, #091722 0%, #0d1d2a 32%, #07131d 100%);
+      color: var(--text);
+      font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    .ambient-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(110px);
+      z-index: 0;
+      opacity: 0.26;
+      pointer-events: none;
+    }
+    .orb-teal { width: 450px; height: 450px; background: rgba(46,199,215,0.6); top: -150px; right: -50px; }
+    .orb-yellow { width: 350px; height: 350px; background: rgba(245,190,91,0.45); bottom: -100px; left: 18%; }
+
+    header {
+      position: relative;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(24, 39, 51, 0.96), rgba(12, 22, 31, 0.98));
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid rgba(92, 122, 143, 0.8);
+      box-shadow: 0 12px 20px rgba(3, 8, 14, 0.24), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    .page-heading h1 {
+      font-size: clamp(1.7rem, 2.5vw, 2.5rem);
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--teal-glow), var(--yellow) 78%, #f4a261);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+
+    .page-heading p {
+      margin-top: 0.28rem;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .grid {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 1.5rem;
+      padding: 1.5rem;
+      max-width: 1450px;
+      margin: 0 auto;
+    }
+
+    .glass-card {
+      background: linear-gradient(180deg, rgba(33, 52, 65, 0.98), rgba(11, 21, 30, 0.96));
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 18px;
+      padding: 1.4rem;
+      box-shadow: var(--shadow-outer), var(--shadow-inset);
+      margin-bottom: 1.5rem;
+    }
+
+    .glass-card h3 {
+      margin-bottom: 0.75rem;
+      font-size: 1.15rem;
+      color: var(--teal-glow);
+      font-weight: 800;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #020a10;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    video, canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #020a10;
+    }
+
+    .hud {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      z-index: 10;
+      padding: 0.7rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      background: rgba(11, 21, 30, 0.9);
+      box-shadow: inset 1px 1px 0 rgba(255,255,255,0.08), 0 10px 18px rgba(2,8,18,0.26);
+    }
+
+    .timer-hud {
+      top: 1rem;
+      right: 1rem;
+      left: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-width: 162px;
+      padding: 0.7rem 0.9rem;
+      z-index: 13;
+    }
+
+    .timer-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .timer-value {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: var(--teal-glow);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 12px rgba(127,232,241,0.28);
+    }
+
+    .rep-badge { font-size: 1.55rem; font-weight: 800; color: var(--yellow); font-family: "SFMono-Regular", Consolas, monospace; }
+    .status-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(180deg, #2ec7d7, #1a9db1);
+      border: 1px solid rgba(126, 232, 241, 0.45);
+      border-radius: 10px;
+      color: #ecfeff;
+      padding: 0.8rem 1.1rem;
+      cursor: pointer;
+      font-weight: 800;
+      box-shadow: 0 6px 0 rgba(4, 11, 18, 0.55), inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .btn:active { transform: translateY(2px); box-shadow: inset 3px 3px 6px rgba(0,0,0,0.34), inset -1px -1px 2px rgba(255,255,255,0.08); }
+    .btn-coral { background: linear-gradient(180deg, #ef6c62, #c74a44); border-color: rgba(255, 175, 170, 0.48); }
+    .btn-secondary { background: linear-gradient(180deg, #243d4f, #162b38); border-color: rgba(120, 151, 170, 0.8); }
+
+    select, input {
+      width: 100%;
+      padding: 0.75rem 0.85rem;
+      background: linear-gradient(180deg, #0d1925, #101f2d);
+      color: var(--text);
+      border-radius: 10px;
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      margin-top: 0.35rem;
+      font-size: 0.92rem;
+      box-shadow: inset 3px 3px 7px rgba(0,0,0,0.26), inset -2px -2px 5px rgba(255,255,255,0.04);
+    }
+
+    .item-box {
+      background: rgba(10, 18, 25, 0.72);
+      padding: 0.8rem 0.9rem;
+      border-radius: 10px;
+      border-left: 3px solid var(--teal-glow);
+      margin-bottom: 0.5rem;
+      font-size: 0.86rem;
+      box-shadow: inset 1px 1px 0 rgba(255,255,255,0.06), inset -1px -1px 0 rgba(0,0,0,0.2);
+    }
+
+    .schedule-banner {
+      background: rgba(46, 199, 215, 0.14);
+      border: 1px solid rgba(126, 232, 241, 0.7);
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .routine-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-top: 0.75rem;
+    }
+
+    .routine-btn {
+      flex: 1 1 110px;
+      min-width: 110px;
+      background: linear-gradient(180deg, #2ec7d7, #1a9db1);
+      border: 1px solid rgba(126, 232, 241, 0.42);
+      border-radius: 10px;
+      padding: 0.75rem 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      color: #ecfeff;
+      box-shadow: 0 6px 0 rgba(4, 11, 18, 0.55), inset 1px 1px 0 rgba(255,255,255,0.14), inset -2px -2px 3px rgba(0,0,0,0.38);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .routine-btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .routine-btn.secondary { background: linear-gradient(180deg, #243d4f, #162b38); border-color: rgba(120, 151, 170, 0.8); }
+    .routine-btn.neutral {
+      background: linear-gradient(180deg, #3a4754, #1d2a33);
+      border-color: rgba(160, 176, 188, 0.55);
+      color: rgba(236, 254, 255, 0.9);
+    }
+    .routine-btn.coral { background: linear-gradient(180deg, #ef6c62, #c74a44); border-color: rgba(255, 175, 170, 0.48); }
+    .routine-btn.active {
+      background: linear-gradient(180deg, #34d399, #1f9d72);
+      box-shadow: 0 0 0 2px rgba(52,211,153,0.45), 0 6px 0 rgba(4,11,18,0.55);
+    }
+    .routine-btn.secondary.active {
+      background: linear-gradient(180deg, #38bdf8, #1869a0);
+      box-shadow: 0 0 0 2px rgba(56,189,248,0.45), 0 6px 0 rgba(4,11,18,0.55);
+    }
+    .routine-btn.neutral.active {
+      background: linear-gradient(180deg, #4a5864, #2b3740);
+      box-shadow: none;
+      filter: none;
+    }
+    .routine-btn.coral.active {
+      background: linear-gradient(180deg, #f89a67, #d35a17);
+      box-shadow: 0 0 0 2px rgba(248,154,103,0.45), 0 6px 0 rgba(4,11,18,0.55);
+    }
+
+    .routine-instructions {
+      position: absolute;
+      top: 1rem;
+      right: 186px;
+      z-index: 12;
+      max-width: min(40%, 300px);
+      pointer-events: none;
+    }
+
+    .routine-instructions .inner {
+      background: rgba(11, 21, 30, 0.94);
+      border: 1px solid rgba(95, 128, 144, 0.8);
+      border-radius: 12px;
+      padding: 0.75rem 0.9rem;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.25), inset 1px 1px 0 rgba(255,255,255,0.08);
+      text-align: left;
+      font-size: clamp(0.78rem, 1vw, 1.1rem);
+      line-height: 1.3;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+
+    .routine-instructions .inner .small {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: clamp(0.64rem, 0.8vw, 0.9rem);
+      font-weight: 700;
+      color: var(--yellow);
+    }
+
+    .challenge-notice {
+      display: none;
+      margin-top: .8rem;
+      padding: .85rem 1rem;
+      border: 1px solid rgba(245,190,91,0.8);
+      border-radius: 12px;
+      background: rgba(245,190,91,0.12);
+      color: var(--text);
+      font-size: .85rem;
+      line-height: 1.45;
+    }
+
+    #webcam { transform: scaleX(-1); }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .grid > div { display: contents; }
+
+      .camera-card { order: 1; }
+      .routine-card { order: 2; }
+      .pain-card { order: 3; }
+      .pt-card { order: 4; }
+
+      .camera-card {
+        margin: 0;
+        border-radius: 0;
+        padding: 0.75rem;
+      }
+
+      .camera-card h3 { padding: 0 0.25rem; }
+
+      .camera-card .canvas-container {
+        min-height: calc(100svh - 9rem);
+        height: calc(100svh - 9rem);
+        aspect-ratio: auto;
+      }
+
+      .camera-card > div:last-child {
+        flex-wrap: wrap;
+      }
+
+      .camera-card > div:last-child .btn {
+        flex: 1 1 42%;
+      }
+
+      .routine-card, .pain-card, .pt-card {
+        margin-left: 0.75rem;
+        margin-right: 0.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-orb orb-teal"></div>
+  <div class="ambient-orb orb-yellow"></div>
+
+  <header>
+    <div class="page-heading">
+      <h1>Practice Studio</h1>
+      <p>Recovery & Movement Hub</p>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="glass-card camera-card">
+        <h3>Live Form Tracking</h3>
+        <div class="canvas-container">
+          <video id="webcam" autoplay playsinline muted></video>
+          <canvas id="output_canvas"></canvas>
+
+          <div class="hud">
+            <div class="rep-badge" id="rep-display">Reps: 0</div>
+            <div class="status-text" id="status-text">Camera Off</div>
+          </div>
+
+          <div class="hud timer-hud" id="camera-timers" style="display:none;">
+            <div class="timer-group">
+              <span>Total</span>
+              <span class="timer-value" id="session-timer">00:00</span>
+            </div>
+            <div class="timer-group">
+              <span>Exercise</span>
+              <span class="timer-value" id="exercise-timer">00:00</span>
+            </div>
+          </div>
+
+          <div id="routine-instructions" class="routine-instructions" style="display:none;">
+            <div class="inner" id="routine-instruction-text">
+              Ready to move
+              <span class="small" id="routine-instruction-meta">Warm-Up</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:0.75rem;">
+          <button class="btn" onclick="startCamera()">Start Camera</button>
+          <button class="btn btn-coral" onclick="stopCamera()">Stop Camera</button>
+        </div>
+      </div>
+
+      <div class="glass-card pain-card">
+        <h3 style="color:var(--coral);">Pain & Strain Logger</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Body Area</label>
+            <input type="text" id="pain-area" placeholder="e.g. Left Ankle">
+          </div>
+          <div>
+            <label style="font-size:0.8rem; color:var(--text-muted);">Severity (1-10)</label>
+            <input type="number" id="pain-level" min="1" max="10" placeholder="e.g. 4">
+          </div>
+        </div>
+        <button class="btn btn-coral" style="margin-top:0.75rem;" onclick="logPain()">Save Pain Log</button>
+        <div id="pain-log-output" style="margin-top:0.5rem;"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="glass-card routine-card">
+        <h3>Warm-Up & Cool-Down Routines</h3>
+        
+        <div id="schedule-status" class="schedule-banner">
+          Checking today's assigned training routine...
+        </div>
+
+        <label style="font-size:0.8rem; color:var(--text-muted)">Style</label>
+        <select id="dance-style">
+          <option value="hiphop">Hip-Hop / Breaking</option>
+          <option value="ballet">Ballet / Contemporary</option>
+          <option value="jazz">Jazz / Theater</option>
+        </select>
+
+        <div class="routine-controls">
+          <button class="routine-btn neutral" onclick="selectRoutineDuration(5)">5 Min</button>
+          <button class="routine-btn secondary" onclick="selectRoutineDuration(10)">10 Min</button>
+          <button class="routine-btn secondary" onclick="selectRoutineDuration(15)">15 Min</button>
+        </div>
+
+        <div class="routine-controls" style="margin-top: 0.75rem;">
+          <button class="routine-btn neutral" onclick="startWarmup(false)">Warm-Up</button>
+          <button class="routine-btn coral" onclick="startWarmup(true)">Challenge Mode</button>
+          <button class="routine-btn secondary" onclick="startCooldown()">Cool-Down</button>
+        </div>
+
+        <div id="challenge-notice" class="challenge-notice">
+          <strong>Challenge Mode</strong><br>
+          In Challenge Mode, the goal is to complete as many reps as you can in a certain duration! Your high score will save, so the more reps you get, the higher your ranking will go!
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:0.75rem;">
+          <button class="btn" onclick="startCountdown()">Start Countdown</button>
+          <button id="stop-routine-btn" class="btn btn-coral" onclick="stopRoutineCountdown()">Stop Warm-Up</button>
+        </div>
+
+        <div id="routine-list" style="margin-top: 1rem;"></div>
+      </div>
+
+      <div class="glass-card pt-card">
+        <h3 style="color:var(--yellow);">Search Local PT Clinics</h3>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;">Enter your location or zip code to search map data.</p>
+        
+        <input type="text" id="pt-location-input" placeholder="e.g. Arlington, VA or 22201" onkeydown="if(event.key === 'Enter') searchPTDirectory()">
+        <button class="btn btn-secondary" style="margin-top:0.75rem;" onclick="searchPTDirectory()">Search Nearby Clinics</button>
+        
+        <div id="directory-list" style="margin-top: 0.75rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const videoElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const statusDisplay = document.getElementById('status-text');
+    let cameraStream = null;
+    let selectedDuration = 5;
+    let activeRoutine = [];
+    let routineTimer = null;
+    let lastAction = null;
+    let countdownTimer = null;
+    let countdownRemaining = 0;
+    let sessionCountdownTimer = null;
+    let exerciseCountdownTimer = null;
+    let sessionTimeRemaining = 0;
+    let exerciseTimeRemaining = 0;
+    let routineType = null;
+    let challengeMode = false;
+    let challengeReps = 0;
+    let lastSpokenInstruction = '';
+    let routineStarted = false;
+    let repReady = true;
+    let lastFeedbackAt = 0;
+    let routineSequenceIndex = 0;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      resetRoutineButtons();
+      checkTodaySchedule();
+    });
+
+    function resetRoutineButtons() {
+      document.querySelectorAll('.routine-btn').forEach((button) => {
+        const text = button.textContent.trim();
+        button.classList.remove('active');
+        if (text.endsWith('Min') || text === 'Warm-Up' || text === 'Cool-Down') {
+          button.classList.add('neutral');
+        }
+      });
+    }
+
+    function setButtonState(button, isActive) {
+      button.classList.toggle('active', isActive);
+      button.classList.toggle('neutral', !isActive && !button.classList.contains('coral'));
+    }
+
+    function selectRoutineDuration(minutes) {
+      selectedDuration = minutes;
+      const durationButtons = document.querySelectorAll('.routine-btn');
+      durationButtons.forEach((button) => {
+        const label = button.textContent.trim();
+        if (label === `${minutes} Min`) {
+          setButtonState(button, minutes !== 5);
+          button.classList.toggle('neutral', minutes === 5 && !button.classList.contains('active'));
+        } else if (label.endsWith('Min')) {
+          setButtonState(button, false);
+          button.classList.add('neutral');
+        }
+      });
+
+      if (lastAction === 'warmup') {
+        startWarmup(false);
+      } else if (lastAction === 'cooldown') {
+        startCooldown();
+      } else if (lastAction === 'challenge') {
+        startWarmup(true);
+      }
+    }
+
+    function setActionButtonState(label) {
+      document.querySelectorAll('.routine-btn').forEach((button) => {
+        const text = button.textContent.trim();
+        if (text === 'Warm-Up' || text === 'Challenge Mode' || text === 'Cool-Down') {
+          setButtonState(button, text === label);
+        }
+      });
+    }
+
+    function updateStopButtonLabel() {
+      const button = document.getElementById('stop-routine-btn');
+      if (!button) return;
+      const label = routineType === 'cooldown' ? 'Stop Cool-Down' : 'Stop Warm-Up';
+      button.textContent = label;
+    }
+
+    function formatCountdown(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+      const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
+      return `${minutes}:${seconds}`;
+    }
+
+    function updateRoutineTimers() {
+      const sessionTimer = document.getElementById('session-timer');
+      const exerciseTimer = document.getElementById('exercise-timer');
+      if (sessionTimer) sessionTimer.textContent = formatCountdown(Math.max(0, sessionTimeRemaining));
+      if (exerciseTimer) exerciseTimer.textContent = formatCountdown(Math.max(0, exerciseTimeRemaining));
+    }
+
+    function showRoutineInstruction(text, meta) {
+      const container = document.getElementById('routine-instruction-text');
+      container.innerHTML = `${text}<span class="small">${meta}</span>`;
+      document.getElementById('routine-instructions').style.display = 'block';
+    }
+
+    function getPreferredVoice() {
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find((voice) => {
+        const name = voice.name.toLowerCase();
+        return name.includes('samantha') || name.includes('zira') || name.includes('aria') || name.includes('female') || name.includes('woman');
+      });
+      return preferred || voices[0] || null;
+    }
+
+    function speakRoutine(text) {
+      if (!('speechSynthesis' in window) || !text || text === lastSpokenInstruction) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      const preferredVoice = getPreferredVoice();
+      if (preferredVoice) utterance.voice = preferredVoice;
+      utterance.rate = 0.95;
+      utterance.pitch = 1.12;
+      utterance.volume = 1;
+      window.speechSynthesis.speak(utterance);
+      lastSpokenInstruction = text;
+    }
+
+    function playCountdownSequence() {
+      const sequence = ['3', '2', '1'];
+      sequence.forEach((number, index) => {
+        setTimeout(() => {
+          showRoutineInstruction(number, `${routineType === 'cooldown' ? 'Cool-Down' : 'Warm-Up'} starts in`);
+          speakRoutine(number);
+        }, index * 1000);
+      });
+
+      const startDelay = sequence.length * 1000;
+      setTimeout(() => {
+        const startText = routineType === 'cooldown' ? 'Cool-down begins now. Breathe deeply and move slowly.' : 'Warm-up begins now. Stay tall and move with control.';
+        showRoutineInstruction(routineType === 'cooldown' ? 'Cool-Down' : 'Warm-Up', 'In motion');
+        speakRoutine(startText);
+        startRoutineSequence();
+      }, startDelay + 200);
+    }
+
+    function triggerExerciseAudio(exercise) {
+      const instructionText = exercise.short_description || exercise.description || exercise.instruction;
+      const exerciseText = `${exercise.name}. ${instructionText}`;
+      showRoutineInstruction(exercise.name, `${routineType === 'cooldown' ? 'Cool-Down' : 'Warm-Up'} ${routineSequenceIndex + 1}/${activeRoutine.length}`);
+      speakRoutine(exerciseText);
+    }
+
+    function startSessionCountdown() {
+      if (sessionCountdownTimer) clearInterval(sessionCountdownTimer);
+      sessionCountdownTimer = setInterval(() => {
+        if (sessionTimeRemaining <= 0) {
+          clearInterval(sessionCountdownTimer);
+          sessionCountdownTimer = null;
+          return;
+        }
+        sessionTimeRemaining = Math.max(0, sessionTimeRemaining - 1);
+        updateRoutineTimers();
+      }, 1000);
+    }
+
+    function startExerciseCountdown(durationSeconds) {
+      if (exerciseCountdownTimer) clearInterval(exerciseCountdownTimer);
+      exerciseTimeRemaining = Math.max(1, durationSeconds);
+      updateRoutineTimers();
+      exerciseCountdownTimer = setInterval(() => {
+        if (exerciseTimeRemaining <= 0) {
+          clearInterval(exerciseCountdownTimer);
+          exerciseCountdownTimer = null;
+          return;
+        }
+        exerciseTimeRemaining = Math.max(0, exerciseTimeRemaining - 1);
+        updateRoutineTimers();
+      }, 1000);
+    }
+
+    function startRoutineSequence() {
+      if (!activeRoutine.length) return;
+      routineSequenceIndex = 0;
+      sessionTimeRemaining = (selectedDuration || 5) * 60;
+      document.getElementById('camera-timers').style.display = 'flex';
+      updateRoutineTimers();
+      startSessionCountdown();
+
+      const runNextExercise = () => {
+        if (routineSequenceIndex >= activeRoutine.length) {
+          clearInterval(sessionCountdownTimer);
+          clearInterval(exerciseCountdownTimer);
+          sessionCountdownTimer = null;
+          exerciseCountdownTimer = null;
+          sessionTimeRemaining = 0;
+          exerciseTimeRemaining = 0;
+          updateRoutineTimers();
+          showRoutineInstruction('Routine Complete', 'Great job');
+          speakRoutine('Routine complete. Great job.');
+          routineStarted = false;
+          if (challengeMode) saveChallengeResult();
+          return;
+        }
+
+        const exercise = activeRoutine[routineSequenceIndex];
+        const exerciseSeconds = Number(exercise.duration_sec || exercise.hold_duration_sec || 30);
+        const label = routineType === 'cooldown' ? 'Cool-Down' : 'Warm-Up';
+
+        triggerExerciseAudio(exercise);
+        routineSequenceIndex += 1;
+        startExerciseCountdown(exerciseSeconds);
+
+        const delay = Math.max(exerciseSeconds * 1000, 2200);
+        routineTimer = setTimeout(runNextExercise, delay);
+      };
+
+      routineStarted = true;
+      runNextExercise();
+    }
+
+    function stopRoutineCountdown() {
+      if (routineTimer) clearTimeout(routineTimer);
+      if (sessionCountdownTimer) clearInterval(sessionCountdownTimer);
+      if (exerciseCountdownTimer) clearInterval(exerciseCountdownTimer);
+      if (countdownTimer) clearInterval(countdownTimer);
+      routineTimer = null;
+      countdownTimer = null;
+      sessionCountdownTimer = null;
+      exerciseCountdownTimer = null;
+      countdownRemaining = 0;
+      sessionTimeRemaining = 0;
+      exerciseTimeRemaining = 0;
+      updateRoutineTimers();
+      document.getElementById('camera-timers').style.display = 'none';
+      routineStarted = false;
+      routineSequenceIndex = 0;
+      activeRoutine = [];
+      lastAction = null;
+      window.speechSynthesis.cancel();
+      document.getElementById('routine-list').innerHTML = '<div class="item-box"><strong style="color:var(--text);">Routine stopped.</strong><p style="color:var(--text-muted); margin-top:2px;">Choose a warm-up or cool-down to begin again.</p></div>';
+    }
+
+    function startCountdown() {
+      if (!activeRoutine.length) {
+        alert('Choose a warm-up or cool-down routine first.');
+        return;
+      }
+      if (routineTimer) clearTimeout(routineTimer);
+      if (sessionCountdownTimer) clearInterval(sessionCountdownTimer);
+      if (exerciseCountdownTimer) clearInterval(exerciseCountdownTimer);
+      sessionCountdownTimer = null;
+      exerciseCountdownTimer = null;
+      routineSequenceIndex = 0;
+      playCountdownSequence();
+    }
+
+    async function saveChallengeResult() {
+      try {
+        const response = await fetch('/api/challenge-result', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({duration: selectedDuration, reps: challengeReps})
+        });
+        const data = await response.json();
+        if (response.ok) speakRoutine(`Challenge complete. You earned ${data.result.ranking}.`);
+      } catch (error) {}
+    }
+
+    function checkTodaySchedule() {
+      const savedProfile = localStorage.getItem("danceguard_profile_data");
+      const statusBanner = document.getElementById('schedule-status');
+
+      if (!savedProfile) {
+        statusBanner.innerHTML = `Set up your profile in onboarding to get automatically assigned daily routines.`;
+        return;
+      }
+
+      const profile = JSON.parse(savedProfile);
+      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const today = days[new Date().getDay()];
+      const isDanceDay = profile.dance_days && profile.dance_days.includes(today);
+
+      if (profile.style) {
+        document.getElementById('dance-style').value = profile.style;
+      }
+
+      if (isDanceDay) {
+        statusBanner.style.borderColor = 'var(--teal-glow)';
+        statusBanner.style.background = 'rgba(20, 184, 166, 0.15)';
+        statusBanner.innerHTML = `<strong>Today is a Practice Day (${today})!</strong><br>Your tailored ${profile.style} warm-up is ready below.`;
+        loadWarmup();
+      } else {
+        statusBanner.style.borderColor = 'var(--yellow)';
+        statusBanner.style.background = 'rgba(250, 204, 21, 0.15)';
+        statusBanner.innerHTML = `<strong>Rest / Active Recovery Day (${today}).</strong><br>Perform light stretches or cool-down routines to keep joints mobile.`;
+        loadCooldown();
+      }
+    }
+
+    async function startCamera() {
+      try {
+        statusDisplay.innerText = "Starting Camera...";
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: 'user' } }
+        });
+        videoElement.srcObject = cameraStream;
+        await videoElement.play();
+        statusDisplay.innerText = "Camera Active";
+        requestAnimationFrame(processFrame);
+      } catch (err) {
+        statusDisplay.innerText = "Camera Error";
+      }
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        videoElement.srcObject = null;
+        cameraStream = null;
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        statusDisplay.innerText = "Camera Off";
+      }
+    }
+
+    function providePoseFeedback(landmarks) {
+      if (!routineStarted || !landmarks || !landmarks.length) return;
+      const now = Date.now();
+      const visible = landmarks.filter((point) => point.visibility === undefined || point.visibility > .45);
+      const inFrame = visible.length >= 8 && visible.every((point) => point.x > .04 && point.x < .96 && point.y > .04 && point.y < .96);
+      if (!inFrame && now - lastFeedbackAt > 6000) {
+        speakRoutine('Please step back so your full body stays in frame.');
+        lastFeedbackAt = now;
+        return;
+      }
+
+      const leftKnee = landmarks[25];
+      const rightKnee = landmarks[26];
+      const leftHip = landmarks[23];
+      const rightHip = landmarks[24];
+      const kneeRaised = (leftKnee && leftHip && leftKnee.y < leftHip.y - .08) || (rightKnee && rightHip && rightKnee.y < rightHip.y - .08);
+      if (challengeMode && kneeRaised && repReady) {
+        challengeReps += 1;
+        repReady = false;
+      } else if (!kneeRaised) {
+        repReady = true;
+      }
+
+      if (now - lastFeedbackAt > 10000 && leftHip && rightHip && leftKnee && rightKnee) {
+        const kneesBent = leftKnee.y > leftHip.y && rightKnee.y > rightHip.y;
+        if (!kneesBent && routineType === 'warmup') {
+          speakRoutine('Keep a soft bend in your knees and move with control.');
+          lastFeedbackAt = now;
+        }
+      }
+    }
+
+    const pose = new Pose({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}` });
+    pose.setOptions({ modelComplexity: 0, smoothLandmarks: true });
+    pose.onResults((results) => {
+      canvasElement.width = videoElement.videoWidth;
+      canvasElement.height = videoElement.videoHeight;
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      canvasCtx.translate(canvasElement.width, 0);
+      canvasCtx.scale(-1, 1);
+      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+      if (results.poseLandmarks && typeof window.drawConnectors !== 'undefined') {
+        window.drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#2dd4bf', lineWidth: 4});
+        window.drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#facc15', lineWidth: 2, radius: 4});
+      }
+      providePoseFeedback(results.poseLandmarks);
+      canvasCtx.restore();
+    });
+
+    let isProcessing = false;
+    async function processFrame() {
+      if (videoElement.readyState >= 2 && !isProcessing && cameraStream) {
+        isProcessing = true;
+        try { await pose.send({ image: videoElement }); } catch (e) {}
+        isProcessing = false;
+      }
+      if (cameraStream) requestAnimationFrame(processFrame);
+    }
+
+    async function loadWarmup() {
+      const style = document.getElementById('dance-style').value;
+      const safeDuration = selectedDuration || 5;
+      const res = await fetch(`/api/warmup?style=${style}&duration=${safeDuration}`);
+      const data = await res.json();
+      activeRoutine = data.routine;
+      document.getElementById('routine-list').innerHTML = data.routine.map(ex => {
+        const label = ex.is_stationary ? `Hold ${ex.duration_sec} sec` : `${ex.target_reps} reps`;
+        return `
+          <div class="item-box">
+            <strong style="color:var(--yellow);">${ex.name}</strong> (${label})
+            <p style="color:var(--text-muted); margin-top:2px;">${ex.instruction}</p>
+          </div>
+        `;
+      }).join('');
+      if (data.routine.length > 0) {
+        showRoutineInstruction(data.routine[0].name, `${selectedDuration} minute warm-up`);
+      }
+    }
+
+    async function loadCooldown() {
+      const safeDuration = selectedDuration || 5;
+      const res = await fetch(`/api/cooldown?duration=${safeDuration}`);
+      const data = await res.json();
+      activeRoutine = data.routine;
+      document.getElementById('routine-list').innerHTML = data.routine.map(ex => `
+        <div class="item-box" style="border-left-color:var(--coral);">
+          <strong style="color:var(--coral);">${ex.name}</strong> (${ex.target_reps})
+          <p style="color:var(--text-muted); margin-top:2px;">${ex.instruction}</p>
+        </div>
+      `).join('');
+      if (data.routine.length > 0) {
+        showRoutineInstruction(data.routine[0].name, `${selectedDuration} minute cool-down`);
+      }
+    }
+
+    async function startWarmup(isChallenge) {
+      const style = document.getElementById('dance-style').value;
+      const safeDuration = selectedDuration || 5;
+      const res = await fetch(`/api/warmup?style=${style}&duration=${safeDuration}&challenge_mode=${isChallenge}`);
+      const data = await res.json();
+      activeRoutine = data.routine;
+      routineType = 'warmup';
+      challengeMode = isChallenge;
+      challengeReps = 0;
+      lastAction = isChallenge ? 'challenge' : 'warmup';
+      updateStopButtonLabel();
+      document.getElementById('challenge-notice').style.display = isChallenge ? 'block' : 'none';
+      document.getElementById('routine-list').innerHTML = data.routine.map((ex, idx) => {
+        const label = isChallenge ? 'AMRAP' : (ex.is_stationary ? `Hold ${ex.duration_sec} sec` : `${ex.target_reps} reps`);
+        return `
+          <div class="item-box">
+            <strong style="color:var(--yellow);">${idx + 1}. ${ex.name}</strong> (${label})
+            <p style="color:var(--text-muted); margin-top:2px;">${ex.instruction}</p>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.routine-btn').forEach((button) => {
+        const label = button.textContent.trim();
+        if (label === 'Warm-Up' || label === 'Challenge Mode' || label === 'Cool-Down') {
+          if (label === 'Warm-Up') {
+            button.classList.add('neutral');
+            button.classList.remove('active');
+          } else {
+            setButtonState(button, label === (isChallenge ? 'Challenge Mode' : 'Cool-Down'));
+          }
+        }
+      });
+
+      if (data.routine.length > 0) {
+        showRoutineInstruction(data.routine[0].name, `${selectedDuration} minute warm-up`);
+      }
+    }
+
+    async function startCooldown() {
+      const safeDuration = selectedDuration || 5;
+      const res = await fetch(`/api/cooldown?duration=${safeDuration}`);
+      const data = await res.json();
+      activeRoutine = data.routine;
+      routineType = 'cooldown';
+      challengeMode = false;
+      lastAction = 'cooldown';
+      updateStopButtonLabel();
+      document.getElementById('challenge-notice').style.display = 'none';
+      document.getElementById('routine-list').innerHTML = data.routine.map((ex, idx) => `
+        <div class="item-box" style="border-left-color:var(--coral);">
+          <strong style="color:var(--coral);">${idx + 1}. ${ex.name}</strong> (${ex.target_reps})
+          <p style="color:var(--text-muted); margin-top:2px;">${ex.instruction}</p>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.routine-btn').forEach((button) => {
+        const label = button.textContent.trim();
+        if (label === 'Warm-Up' || label === 'Challenge Mode' || label === 'Cool-Down') {
+          setButtonState(button, label === 'Cool-Down');
+        }
+      });
+
+      if (data.routine.length > 0) {
+        showRoutineInstruction(data.routine[0].name, `${selectedDuration} minute cool-down`);
+      }
+    }
+
+    async function logPain() {
+      const area = document.getElementById('pain-area').value;
+      const level = document.getElementById('pain-level').value;
+      if (!area || !level) return;
+
+      const res = await fetch('/api/log-pain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ area, level })
+      });
+      const data = await res.json();
+      document.getElementById('pain-log-output').innerHTML = `
+        <div class="item-box" style="border-left-color:var(--coral);">Pain recorded for ${area} (Severity: ${level}/10)</div>
+      `;
+    }
+
+    async function searchPTDirectory() {
+      const locationInput = document.getElementById('pt-location-input').value.trim();
+      const listEl = document.getElementById('directory-list');
+
+      if (!locationInput) {
+        listEl.innerHTML = `<span style="color:var(--coral); font-size:0.85rem;">Please enter a location or zip code.</span>`;
+        return;
+      }
+
+      listEl.innerHTML = `<span style="color:var(--text-muted); font-size:0.85rem;">Searching location database...</span>`;
+
+      try {
+        const res = await fetch('/api/pt-directory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ location: locationInput })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          listEl.innerHTML = `<span style="color:var(--coral); font-size:0.85rem;">${data.error || 'Search service unavailable.'}</span>`;
+          return;
+        }
+
+        if (!data.directory || data.directory.length === 0) {
+          listEl.innerHTML = `<span style="color:var(--text-muted); font-size:0.85rem;">No clinic listings found for this location.</span>`;
+          return;
+        }
+
+        listEl.innerHTML = data.directory.map(pt => `
+          <div class="item-box">
+            <strong style="color:var(--yellow);">${pt.name}</strong> (${pt.type})<br>
+            <span style="color:var(--text-muted);">${pt.location} • ${pt.phone}</span><br>
+            <a href="${pt.map_url}" target="_blank" rel="noopener noreferrer" style="color:var(--teal-glow); font-size:0.8rem; text-decoration:underline; display:inline-block; margin-top:4px;">View Location on Google Maps ↗</a>
+          </div>
+        `).join('');
+      } catch (err) {
+        listEl.innerHTML = `<span style="color:var(--coral); font-size:0.85rem;">Network error: connection failed.</span>`;
+      }
+    }
+  </script>
+</body>
+</html>
