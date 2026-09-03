@@ -12,8 +12,6 @@ except ImportError:
 
 app = Flask(__name__)
 app.config['GROQ_API_KEY'] = os.getenv('GROQ_API_KEY', '')
-app.config['SUPABASE_URL'] = os.getenv('SUPABASE_URL', 'https://rnwoebohgcdwpijyyekq.supabase.co')
-app.config['SUPABASE_ANON_KEY'] = os.getenv('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJud29lYm9ob2djd3Bpanl5ZWtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxMjM4MTYsImV4cCI6MjEwMzY5OTgxNn0.6Le1ib4awX5ukOtGYfMzgSTOgUtl5m9NousEfajGsyY')
 PROFILE_FILE = Path(app.root_path) / 'profile_data.json'
 KNOWLEDGE_FILE = Path(app.root_path) / 'data' / 'recovery_knowledge.json'
 
@@ -221,10 +219,6 @@ def build_routine(routine_type, duration, age=15, style='ballet', is_challenge=F
 @app.route('/')
 def landing_page():
     return render_template('index.html', profile=load_profile() or {})
-
-@app.route('/login')
-def login_page():
-    return render_template('login.html', supabase_url=app.config['SUPABASE_URL'], supabase_anon_key=app.config['SUPABASE_ANON_KEY'])
 
 @app.route('/survey')
 def survey_page():
