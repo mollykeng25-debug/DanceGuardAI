@@ -220,7 +220,7 @@ def build_routine(routine_type, duration, age=15, style='ballet', is_challenge=F
 
 @app.route('/')
 def landing_page():
-    return render_template('login.html', supabase_url=app.config['SUPABASE_URL'], supabase_anon_key=app.config['SUPABASE_ANON_KEY'])
+    return render_template('index.html', profile=load_profile() or {})
 
 @app.route('/login')
 def login_page():

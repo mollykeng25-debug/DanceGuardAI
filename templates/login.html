@@ -63,7 +63,7 @@
       const message = document.getElementById('message');
       let signUpMode = false;
       const setMessage = (text, error = true) => { message.textContent = text; message.style.color = error ? '#b34d39' : '#0e8f88'; };
-      const redirectIfSignedIn = async () => { const { data } = await supabase.auth.getSession(); if (data.session) window.location.href = '/app'; };
+      const redirectIfSignedIn = async () => { const { data } = await supabase.auth.getSession(); if (data.session) window.location.href = '/'; };
       await redirectIfSignedIn();
       document.getElementById('google-button').addEventListener('click', async () => {
         setMessage('Redirecting to Google...', false);
@@ -87,7 +87,7 @@
         const result = signUpMode ? await supabase.auth.signUp({ email, password }) : await supabase.auth.signInWithPassword({ email, password });
         if (result.error) return setMessage(result.error.message);
         if (signUpMode && !result.data.session) return setMessage('Check your email to confirm your account.', false);
-        window.location.href = '/app';
+        window.location.href = '/';
       });
     });
   </script>
