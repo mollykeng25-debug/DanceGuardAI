@@ -7,6 +7,8 @@ create table if not exists public.user_profiles (
 
 alter table public.user_profiles enable row level security;
 
+grant select, insert, update on public.user_profiles to authenticated;
+
 drop policy if exists "Users can read their own profile" on public.user_profiles;
 create policy "Users can read their own profile"
 on public.user_profiles for select

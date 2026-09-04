@@ -3,7 +3,6 @@
   const getAccessToken = () => {
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index);
-      if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
       try {
         const session = JSON.parse(localStorage.getItem(key));
         if (session && session.access_token) return session.access_token;

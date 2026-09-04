@@ -586,19 +586,20 @@
 
       statusEl.textContent = 'Saving your settings...';
 
-      const response = await fetch('/api/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        statusEl.textContent = data.error || 'Unable to save settings.';
-        return;
+      try {
+        const response = await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Unable to save settings.');
+        localStorage.setItem('danceguard_profile_created', 'true');
+        localStorage.setItem('danceguard_profile_data', JSON.stringify(data.profile || payload));
+        statusEl.textContent = 'Settings saved successfully.';
+      } catch (error) {
+        statusEl.textContent = error.message || 'Unable to save settings.';
       }
-
-      statusEl.textContent = 'Settings saved successfully.';
     });
 
     renderCalendar();
