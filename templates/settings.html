@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DanceGuard - Settings</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
   <script src="{{ url_for('static', filename='sidebar.js') }}" defer></script>
   <style>
@@ -404,6 +405,7 @@
           <button type="submit" class="btn">Save settings</button>
           <a href="/profile" class="btn btn-secondary">View profile</a>
           <a href="/dance" class="btn btn-secondary">Open studio</a>
+          <button type="button" class="btn btn-danger" id="sign-out-button" data-supabase-url="{{ supabase_url }}" data-supabase-anon-key="{{ supabase_anon_key }}">Sign out</button>
           <div id="settings-status" class="status-message" aria-live="polite"></div>
         </div>
       </form>
@@ -441,6 +443,25 @@
   <script>
     const form = document.getElementById('settings-form');
     const statusEl = document.getElementById('settings-status');
+    const signOutButton = document.getElementById('sign-out-button');
+
+    signOutButton.addEventListener('click', async () => {
+      signOutButton.disabled = true;
+      signOutButton.textContent = 'Signing out...';
+      try {
+        const supabase = window.supabase.createClient(signOutButton.dataset.supabaseUrl, signOutButton.dataset.supabaseAnonKey);
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+      } catch (error) {
+        statusEl.textContent = 'Unable to sign out. Please try again.';
+        signOutButton.disabled = false;
+        signOutButton.textContent = 'Sign out';
+        return;
+      }
+      localStorage.removeItem('danceguard_profile_created');
+      localStorage.removeItem('danceguard_profile_data');
+      window.location.href = '/';
+    });
     const avatarPreview = document.getElementById('avatar-preview');
     const avatarUpload = document.getElementById('avatar-upload');
     let currentAvatar = '{{ profile.avatar or "" }}';

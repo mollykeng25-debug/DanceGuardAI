@@ -291,7 +291,12 @@ def profile_page():
 
 @app.route('/settings')
 def settings_page():
-    return render_template('settings.html', profile=load_profile() or {})
+    return render_template(
+        'settings.html',
+        profile=load_profile() or {},
+        supabase_url=app.config['SUPABASE_URL'],
+        supabase_anon_key=app.config['SUPABASE_ANON_KEY']
+    )
 
 @app.route('/api/profile-status')
 def profile_status():
