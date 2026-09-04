@@ -18,25 +18,54 @@ app.config['SUPABASE_ANON_KEY'] = os.getenv('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUz
 PROFILE_FILE = Path(app.root_path) / 'profile_data.json'
 KNOWLEDGE_FILE = Path(app.root_path) / 'data' / 'recovery_knowledge.json'
 
-def load_profile():
+
+class SupabasePersistenceError(RuntimeError):
+    pass
+
+
+@app.errorhandler(SupabasePersistenceError)
+def handle_supabase_persistence_error(error):
+    return jsonify({'error': str(error)}), 503
+
+
+def _supabase_user_id():
     authorization = request.headers.get('Authorization', '')
-    if authorization:
+    if not authorization:
+        return None
+    if not app.config['SUPABASE_ANON_KEY']:
+        raise SupabasePersistenceError('SUPABASE_ANON_KEY is not configured on the server.')
+    headers = {
+        'apikey': app.config['SUPABASE_ANON_KEY'],
+        'Authorization': authorization
+    }
+    try:
+        response = httpx.get(f"{app.config['SUPABASE_URL']}/auth/v1/user", headers=headers, timeout=8)
+    except httpx.HTTPError as error:
+        raise SupabasePersistenceError('Supabase could not be reached.') from error
+    if not response.is_success:
+        raise SupabasePersistenceError(f'Supabase authentication failed ({response.status_code}).')
+    user_id = response.json().get('id')
+    if not user_id:
+        raise SupabasePersistenceError('Supabase did not return a user ID.')
+    return user_id
+
+def load_profile():
+    if request.headers.get('Authorization'):
+        user_id = _supabase_user_id()
+        headers = {'apikey': app.config['SUPABASE_ANON_KEY'], 'Authorization': request.headers['Authorization']}
         try:
-            headers = {'apikey': app.config['SUPABASE_ANON_KEY'], 'Authorization': authorization}
-            user_response = httpx.get(f"{app.config['SUPABASE_URL']}/auth/v1/user", headers=headers, timeout=8)
-            if user_response.is_success:
-                user_id = user_response.json().get('id')
-                profile_response = httpx.get(
-                    f"{app.config['SUPABASE_URL']}/rest/v1/user_profiles",
-                    params={'user_id': f'eq.{user_id}', 'select': 'data', 'limit': '1'},
-                    headers=headers,
-                    timeout=8
-                )
-                if profile_response.is_success:
-                    rows = profile_response.json()
-                    return rows[0].get('data', {}) if rows else None
-        except (httpx.HTTPError, ValueError):
-            pass
+            response = httpx.get(
+                f"{app.config['SUPABASE_URL']}/rest/v1/user_profiles",
+                params={'user_id': f'eq.{user_id}', 'select': 'data', 'limit': '1'},
+                headers=headers,
+                timeout=8
+            )
+        except httpx.HTTPError as error:
+            raise SupabasePersistenceError('Supabase profile lookup failed.') from error
+        if not response.is_success:
+            raise SupabasePersistenceError(f'Supabase profile lookup failed ({response.status_code}).')
+        rows = response.json()
+        return rows[0].get('data', {}) if rows else None
     if not PROFILE_FILE.exists():
         return None
     try:
@@ -48,27 +77,27 @@ def load_profile():
 def save_profile(profile):
     authorization = request.headers.get('Authorization', '')
     if authorization:
+        user_id = _supabase_user_id()
+        headers = {
+            'apikey': app.config['SUPABASE_ANON_KEY'],
+            'Authorization': authorization,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates,return=minimal'
+        }
         try:
-            headers = {
-                'apikey': app.config['SUPABASE_ANON_KEY'],
-                'Authorization': authorization,
-                'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates,return=minimal'
-            }
-            user_response = httpx.get(f"{app.config['SUPABASE_URL']}/auth/v1/user", headers=headers, timeout=8)
-            if user_response.is_success:
-                user_id = user_response.json().get('id')
-                response = httpx.post(
-                    f"{app.config['SUPABASE_URL']}/rest/v1/user_profiles",
-                    params={'on_conflict': 'user_id'},
-                    headers=headers,
-                    json={'user_id': user_id, 'data': profile},
-                    timeout=8
-                )
-                response.raise_for_status()
-                return
-        except (httpx.HTTPError, ValueError):
-            pass
+            response = httpx.post(
+                f"{app.config['SUPABASE_URL']}/rest/v1/user_profiles",
+                params={'on_conflict': 'user_id'},
+                headers=headers,
+                json={'user_id': user_id, 'data': profile},
+                timeout=8
+            )
+        except httpx.HTTPError as error:
+            raise SupabasePersistenceError('Supabase profile save failed.') from error
+        if not response.is_success:
+            detail = response.text[:200]
+            raise SupabasePersistenceError(f'Supabase profile save failed ({response.status_code}): {detail}')
+        return
     PROFILE_FILE.write_text(json.dumps(profile, indent=2), encoding='utf-8')
 
 

@@ -212,9 +212,6 @@
         injuries: document.getElementById('past-injuries').value
       };
 
-      localStorage.setItem("danceguard_profile_created", "true");
-      localStorage.setItem("danceguard_profile_data", JSON.stringify(profile));
-
       const submitButton = document.getElementById('submit-profile');
       const status = document.getElementById('form-status');
       submitButton.disabled = true;
@@ -230,11 +227,13 @@
 
         if (!res.ok) throw new Error('Profile could not be saved.');
         const data = await res.json();
+        localStorage.setItem("danceguard_profile_created", "true");
+        localStorage.setItem("danceguard_profile_data", JSON.stringify(data.profile || profile));
         if (data.redirect) window.location.href = data.redirect;
       } catch (error) {
         submitButton.disabled = false;
         submitButton.textContent = 'Save Profile & Continue';
-        status.textContent = 'Unable to save your profile. Please try again.';
+        status.textContent = error.message || 'Unable to save your profile. Please try again.';
       }
     });
   </script>
