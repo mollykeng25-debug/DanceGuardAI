@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DanceGuard - Profile Setup</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="{{ url_for('static', filename='theme.js') }}" defer></script>
   <style>
     :root {
@@ -192,7 +193,7 @@
       <label>Previous Injuries / Sensitive Areas</label>
       <input type="text" id="past-injuries" placeholder="e.g. Right ankle sprain, lower back strain">
 
-      <button type="submit" class="btn" id="submit-profile">Save Profile & Continue</button>
+      <button type="submit" class="btn" id="submit-profile" data-supabase-url="{{ supabase_url }}" data-supabase-anon-key="{{ supabase_anon_key }}">Save Profile & Continue</button>
       <p id="form-status" role="status" aria-live="polite"></p>
     </form>
   </div>
@@ -219,9 +220,15 @@
       status.textContent = '';
 
       try {
+        const supabase = window.supabase.createClient(submitButton.dataset.supabaseUrl, submitButton.dataset.supabaseAnonKey);
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !sessionData.session) throw new Error('Your session has expired. Please sign in again.');
         const res = await fetch('/submit-survey', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionData.session.access_token}`
+          },
           body: JSON.stringify(profile)
         });
 

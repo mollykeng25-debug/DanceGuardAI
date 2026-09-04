@@ -76,29 +76,28 @@ def load_profile():
 
 def save_profile(profile):
     authorization = request.headers.get('Authorization', '')
-    if authorization:
-        user_id = _supabase_user_id()
-        headers = {
-            'apikey': app.config['SUPABASE_ANON_KEY'],
-            'Authorization': authorization,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates,return=minimal'
-        }
-        try:
-            response = httpx.post(
-                f"{app.config['SUPABASE_URL']}/rest/v1/user_profiles",
-                params={'on_conflict': 'user_id'},
-                headers=headers,
-                json={'user_id': user_id, 'data': profile},
-                timeout=8
-            )
-        except httpx.HTTPError as error:
-            raise SupabasePersistenceError('Supabase profile save failed.') from error
-        if not response.is_success:
-            detail = response.text[:200]
-            raise SupabasePersistenceError(f'Supabase profile save failed ({response.status_code}): {detail}')
-        return
-    PROFILE_FILE.write_text(json.dumps(profile, indent=2), encoding='utf-8')
+    if not authorization:
+        raise SupabasePersistenceError('Please sign in before saving your profile.')
+    user_id = _supabase_user_id()
+    headers = {
+        'apikey': app.config['SUPABASE_ANON_KEY'],
+        'Authorization': authorization,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+    }
+    try:
+        response = httpx.post(
+            f"{app.config['SUPABASE_URL']}/rest/v1/user_profiles",
+            params={'on_conflict': 'user_id'},
+            headers=headers,
+            json={'user_id': user_id, 'data': profile},
+            timeout=8
+        )
+    except httpx.HTTPError as error:
+        raise SupabasePersistenceError('Supabase profile save failed.') from error
+    if not response.is_success:
+        detail = response.text[:200]
+        raise SupabasePersistenceError(f'Supabase profile save failed ({response.status_code}): {detail}')
 
 
 def calculate_hours_between(start_time, end_time):
@@ -304,7 +303,11 @@ def login_page():
 def survey_page():
     if load_profile():
         return redirect('/dance')
-    return render_template('survey.html')
+    return render_template(
+        'survey.html',
+        supabase_url=app.config['SUPABASE_URL'],
+        supabase_anon_key=app.config['SUPABASE_ANON_KEY']
+    )
 
 @app.route('/hourtracker')
 def hourtracker_page():
