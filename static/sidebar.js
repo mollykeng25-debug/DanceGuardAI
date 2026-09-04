@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <nav class="sidebar-nav">
         <ul>
-          <li><a href="/">Landing Page</a></li>
+          <li><a href="/landing">Landing Page</a></li>
           <li><a href="/dance">Practice Studio</a></li>
           <li><a href="/chatbot">AI Assistant</a></li>
           <li><a href="/settings">Settings</a></li>
