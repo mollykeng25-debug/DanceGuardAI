@@ -127,6 +127,15 @@
       color: var(--text);
     }
 
+    .msg-ai .markdown-content { display: grid; gap: 0.55rem; }
+    .msg-ai .markdown-content p { margin: 0; }
+    .msg-ai .markdown-content h3 { margin: 0.25rem 0 0; color: var(--teal-glow); font-size: 1rem; }
+    .msg-ai .markdown-content ul, .msg-ai .markdown-content ol { margin: 0; padding-left: 1.35rem; }
+    .msg-ai .markdown-content li { margin: 0.25rem 0; }
+    .msg-ai .markdown-content strong { color: #f6c75a; }
+    .msg-ai .markdown-content a { color: var(--teal-glow); }
+    .msg-ai .markdown-content code { padding: 0.1rem 0.3rem; border-radius: 4px; background: rgba(255,255,255,0.1); color: #f6c75a; }
+
     .chat-status {
       min-height: 1.2rem;
       margin-top: 0.6rem;
@@ -417,25 +426,66 @@
     }
 
     function formatJsonChatReply(data) {
-      const lines = [];
+      const sections = [];
 
       if (data.answer) {
-        lines.push(data.answer);
+        sections.push(`**Assessment**\n${data.answer}`);
       }
 
-      if (Array.isArray(data.treatment) && data.treatment[0]) {
-        lines.push(data.treatment[0]);
+      if (Array.isArray(data.treatment) && data.treatment.length) {
+        sections.push(`**What to do now**\n${data.treatment.map((item) => `- ${item}`).join('\n')}`);
       }
 
-      if (Array.isArray(data.strengthening) && data.strengthening[0]) {
-        lines.push(data.strengthening[0]);
+      if (Array.isArray(data.strengthening) && data.strengthening.length) {
+        sections.push(`**Strengthening**\n${data.strengthening.map((item) => `- ${item}`).join('\n')}`);
       }
 
-      if (Array.isArray(data.warning_signs) && data.warning_signs[0]) {
-        lines.push(data.warning_signs[0]);
+      if (Array.isArray(data.warning_signs) && data.warning_signs.length) {
+        sections.push(`**Get medical help if**\n${data.warning_signs.map((item) => `- ${item}`).join('\n')}`);
       }
 
-      return lines.slice(0, 3).join(' ');
+      return sections.join('\n\n');
+    }
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>'"]/g, (character) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+      }[character]));
+    }
+
+    function renderMarkdown(value) {
+      const lines = escapeHtml(String(value)).split('\n');
+      const output = [];
+      let listType = null;
+
+      const closeList = () => {
+        if (listType) { output.push(`</${listType}>`); listType = null; }
+      };
+      const inline = (line) => line
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+
+      lines.forEach((line) => {
+        const trimmed = line.trim();
+        const unordered = trimmed.match(/^[-*]\s+(.+)$/);
+        const ordered = trimmed.match(/^\d+[.)]\s+(.+)$/);
+        if (!trimmed) { closeList(); return; }
+        if (trimmed.startsWith('### ')) { closeList(); output.push(`<h3>${inline(trimmed.slice(4))}</h3>`); return; }
+        if (trimmed.startsWith('## ')) { closeList(); output.push(`<h3>${inline(trimmed.slice(3))}</h3>`); return; }
+        if (unordered || ordered) {
+          const nextType = unordered ? 'ul' : 'ol';
+          if (listType !== nextType) { closeList(); listType = nextType; output.push(`<${listType}>`); }
+          output.push(`<li>${inline((unordered || ordered)[1])}</li>`);
+          return;
+        }
+        closeList();
+        output.push(`<p>${inline(trimmed)}</p>`);
+      });
+      closeList();
+      return output.join('');
     }
 
     function appendMessage(sender, text, imageSrc = null, isJson = false) {
@@ -454,15 +504,17 @@
         if (isJson) {
           try {
             const parsedData = JSON.parse(text);
-            const textNode = document.createElement('span');
-            textNode.innerText = formatJsonChatReply(parsedData);
+            const textNode = document.createElement('div');
+            textNode.className = 'markdown-content';
+            textNode.innerHTML = renderMarkdown(formatJsonChatReply(parsedData));
             msgDiv.appendChild(textNode);
           } catch (e) {
-            msgDiv.innerText = text;
+            msgDiv.textContent = text;
           }
         } else {
-          const textNode = document.createElement('span');
-          textNode.innerText = text;
+          const textNode = document.createElement('div');
+          textNode.className = 'markdown-content';
+          textNode.innerHTML = sender === 'ai' ? renderMarkdown(text) : escapeHtml(text);
           msgDiv.appendChild(textNode);
         }
       }
