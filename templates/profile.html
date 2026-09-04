@@ -128,23 +128,23 @@
       <dl class="profile-grid">
         <div class="profile-field">
           <dt>Age</dt>
-          <dd>{{ profile.age or 'Not provided' }}</dd>
+          <dd id="profile-age">{{ profile.age or 'Not provided' }}</dd>
         </div>
         <div class="profile-field">
           <dt>Hours danced per week</dt>
-          <dd>{{ profile.hours_per_week or 'Not provided' }}</dd>
+          <dd id="profile-hours">{{ profile.hours_per_week or 'Not provided' }}</dd>
         </div>
         <div class="profile-field full">
           <dt>Dance days</dt>
-          <dd>{{ profile.dance_days|join(', ') if profile.dance_days else 'Not provided' }}</dd>
+          <dd id="profile-days">{{ profile.dance_days|join(', ') if profile.dance_days else 'Not provided' }}</dd>
         </div>
         <div class="profile-field full">
           <dt>Primary dance style</dt>
-          <dd>{{ profile.style or 'Not provided' }}</dd>
+          <dd id="profile-style">{{ profile.style or 'Not provided' }}</dd>
         </div>
         <div class="profile-field full">
           <dt>Previous injuries or sensitive areas</dt>
-          <dd>{{ profile.injuries or 'None listed' }}</dd>
+          <dd id="profile-injuries">{{ profile.injuries or 'None listed' }}</dd>
         </div>
       </dl>
 
@@ -185,6 +185,16 @@
     const cameraVideo = document.getElementById('profile-camera');
     const cameraStatus = document.getElementById('camera-status');
     let cameraStream = null;
+
+    fetch('/api/profile').then((response) => response.ok ? response.json() : null).then((profile) => {
+      if (!profile) return;
+      document.getElementById('profile-title').textContent = profile.name || 'Dancer Profile';
+      document.getElementById('profile-age').textContent = profile.age || 'Not provided';
+      document.getElementById('profile-hours').textContent = profile.hours_per_week || 'Not provided';
+      document.getElementById('profile-days').textContent = profile.dance_days && profile.dance_days.length ? profile.dance_days.join(', ') : 'Not provided';
+      document.getElementById('profile-style').textContent = profile.style || 'Not provided';
+      document.getElementById('profile-injuries').textContent = profile.injuries || 'None listed';
+    }).catch(() => {});
 
     function saveAvatar(imageData) {
       status.textContent = 'Saving photo...';

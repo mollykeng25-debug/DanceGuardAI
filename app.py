@@ -3,6 +3,7 @@ import os
 import random
 from datetime import datetime
 from pathlib import Path
+import httpx
 from flask import Flask, request, jsonify, redirect, render_template
 
 try:
@@ -18,6 +19,24 @@ PROFILE_FILE = Path(app.root_path) / 'profile_data.json'
 KNOWLEDGE_FILE = Path(app.root_path) / 'data' / 'recovery_knowledge.json'
 
 def load_profile():
+    authorization = request.headers.get('Authorization', '')
+    if authorization:
+        try:
+            headers = {'apikey': app.config['SUPABASE_ANON_KEY'], 'Authorization': authorization}
+            user_response = httpx.get(f"{app.config['SUPABASE_URL']}/auth/v1/user", headers=headers, timeout=8)
+            if user_response.is_success:
+                user_id = user_response.json().get('id')
+                profile_response = httpx.get(
+                    f"{app.config['SUPABASE_URL']}/rest/v1/user_profiles",
+                    params={'user_id': f'eq.{user_id}', 'select': 'data', 'limit': '1'},
+                    headers=headers,
+                    timeout=8
+                )
+                if profile_response.is_success:
+                    rows = profile_response.json()
+                    return rows[0].get('data', {}) if rows else None
+        except (httpx.HTTPError, ValueError):
+            pass
     if not PROFILE_FILE.exists():
         return None
     try:
@@ -27,6 +46,29 @@ def load_profile():
 
 
 def save_profile(profile):
+    authorization = request.headers.get('Authorization', '')
+    if authorization:
+        try:
+            headers = {
+                'apikey': app.config['SUPABASE_ANON_KEY'],
+                'Authorization': authorization,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates,return=minimal'
+            }
+            user_response = httpx.get(f"{app.config['SUPABASE_URL']}/auth/v1/user", headers=headers, timeout=8)
+            if user_response.is_success:
+                user_id = user_response.json().get('id')
+                response = httpx.post(
+                    f"{app.config['SUPABASE_URL']}/rest/v1/user_profiles",
+                    params={'on_conflict': 'user_id'},
+                    headers=headers,
+                    json={'user_id': user_id, 'data': profile},
+                    timeout=8
+                )
+                response.raise_for_status()
+                return
+        except (httpx.HTTPError, ValueError):
+            pass
     PROFILE_FILE.write_text(json.dumps(profile, indent=2), encoding='utf-8')
 
 

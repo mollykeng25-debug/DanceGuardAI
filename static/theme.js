@@ -1,4 +1,38 @@
 (() => {
+  const nativeFetch = window.fetch.bind(window);
+  const getAccessToken = () => {
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
+      try {
+        const session = JSON.parse(localStorage.getItem(key));
+        if (session && session.access_token) return session.access_token;
+      } catch (error) {}
+    }
+    return null;
+  };
+
+  window.fetch = (input, init = {}) => {
+    const token = getAccessToken();
+    const url = typeof input === 'string' ? input : input.url;
+    const isSameOrigin = url.startsWith('/') || url.startsWith(window.location.origin);
+    if (!token || !isSameOrigin) return nativeFetch(input, init);
+    const headers = new Headers(init.headers || (input instanceof Request ? input.headers : undefined));
+    if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
+    return nativeFetch(input, { ...init, headers });
+  };
+
+  window.addEventListener('load', async () => {
+    if (!getAccessToken()) return;
+    try {
+      const response = await window.fetch('/api/profile');
+      if (!response.ok) return;
+      const profile = await response.json();
+      localStorage.setItem('danceguard_profile_created', 'true');
+      localStorage.setItem('danceguard_profile_data', JSON.stringify(profile));
+    } catch (error) {}
+  });
+
   const STORAGE_KEY = 'danceguard_theme_preferences';
   const defaults = { mode: 'dark', accent: '#14b8a6' };
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || defaults;
